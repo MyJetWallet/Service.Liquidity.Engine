@@ -1,11 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.Grpc.Models;
-using Service.Liquidity.Engine.Settings;
 
-namespace Service.Liquidity.Engine.Services
+namespace Service.Liquidity.Engine.GrpcServices
 {
     public class HelloService: IHelloService
     {

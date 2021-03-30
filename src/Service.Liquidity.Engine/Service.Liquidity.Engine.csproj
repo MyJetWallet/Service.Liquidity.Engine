@@ -12,6 +12,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="2020.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="MyJetWallet.Connector.Ftx" Version="1.0.2" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcMetrics" Version="1.0.0" />
     <PackageReference Include="MyJetWallet.Sdk.GrpcSchema" Version="1.0.5" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.0.10" />
@@ -24,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Service.Liquidity.Engine.Domain\Service.Liquidity.Engine.Domain.csproj" />
     <ProjectReference Include="..\Service.Liquidity.Engine.Grpc\Service.Liquidity.Engine.Grpc.csproj" />
   </ItemGroup>
 

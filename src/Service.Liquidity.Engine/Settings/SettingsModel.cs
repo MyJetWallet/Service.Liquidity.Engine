@@ -7,5 +7,8 @@ namespace Service.Liquidity.Engine.Settings
     {
         [YamlProperty("LiquidityEngine.SeqServiceUrl")]
         public string SeqServiceUrl { get; set; }
+
+        [YamlProperty("LiquidityEngine.ExternalExchange.Ftx.FtxInstrumentsOriginalSymbolToSymbol")]
+        public string FtxInstrumentsOriginalSymbolToSymbol { get; set; }
     }
 }

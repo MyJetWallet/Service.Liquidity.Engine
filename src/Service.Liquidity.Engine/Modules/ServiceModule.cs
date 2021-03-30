@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
+using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -8,7 +9,10 @@ namespace Service.Liquidity.Engine.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            
+            builder
+                .RegisterType<OrderBookManager>()
+                .As<IOrderBookManager>()
+                .SingleInstance();
         }
     }
 }
