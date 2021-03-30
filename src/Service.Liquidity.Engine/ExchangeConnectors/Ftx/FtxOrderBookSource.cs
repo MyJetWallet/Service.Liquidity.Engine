@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Connector.Ftx.WebSocket;
+using Service.Liquidity.Engine.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 
@@ -22,7 +23,7 @@ namespace Service.Liquidity.Engine.ExchangeConnectors.Ftx
 
         public string GetName()
         {
-            return "FTX";
+            return ExchangeNames.FTX;
         }
 
         public List<string> GetSymbols()
@@ -53,7 +54,7 @@ namespace Service.Liquidity.Engine.ExchangeConnectors.Ftx
                 Timestamp = data.GetTime().UtcDateTime,
                 Asks = data.asks.Select(LeOrderBookLevel.Create).Where(e => e != null).ToList(),
                 Bids = data.bids.Select(LeOrderBookLevel.Create).Where(e => e != null).ToList(),
-                Source = "FTX",
+                Source = ExchangeNames.FTX,
                 OriginalSymbol = originalSymbol
             };
 

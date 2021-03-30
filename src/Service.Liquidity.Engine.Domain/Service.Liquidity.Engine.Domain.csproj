@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="MyJetWallet.Domain" Version="1.0.23" />
+    <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>

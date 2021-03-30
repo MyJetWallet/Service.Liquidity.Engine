@@ -5,12 +5,11 @@
         public EngineMode Mode { get; set; }
 
 
+
     }
 
-    public enum EngineMode
+    public class MirroringLiquiditySettings
     {
-        Disabled,
-        Idle,
-        Active
+
     }
 }
