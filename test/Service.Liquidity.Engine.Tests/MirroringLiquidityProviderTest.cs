@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using ME.Contracts.Api.IncomingMessages;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
-using MyJetWallet.MatchingEngine.Grpc.Api;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using Service.Balances.Domain.Models;
+using Service.Liquidity.Engine.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.OrderBooks;
 using Service.Liquidity.Engine.Domain.Models.Settings;
 using Service.Liquidity.Engine.Domain.Models.Wallets;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
-using Service.Liquidity.Engine.Domain.Services.OrderBooks;
-using Service.Liquidity.Engine.Domain.Services.Settings;
-using Service.Liquidity.Engine.Domain.Services.Wallets;
 
 namespace Service.Liquidity.Engine.Tests
 {
@@ -49,6 +44,7 @@ namespace Service.Liquidity.Engine.Tests
 
             _engine = new MirroringLiquidityProvider(
                 _loggerFactory.CreateLogger<MirroringLiquidityProvider>(),
+                new OrderIdGenerator(),
                 _orderBookManager,
                 _settingsMock,
                 _walletManager,
@@ -67,160 +63,81 @@ namespace Service.Liquidity.Engine.Tests
             Console.WriteLine("Debug output");
             Assert.Pass();
         }
-    }
 
-    public class OrderBookManagerMock: IOrderBookManager
-    {
-        public Dictionary<(string, string), LeOrderBook> Data { get; set; } = new();
-
-        public LeOrderBook GetOrderBook(string symbol, string source)
+        [Test]
+        public async Task PlaceSameOrders_from_ExternalMarket()
         {
-            Data.TryGetValue((symbol, source), out var book);
-            return book;
+            SetupEnvironment_1();
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            Assert.IsNotNull(request);
+
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(4m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+
+            Assert.AreEqual(60100m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Min(e => decimal.Parse(e.Price)));
+            Assert.AreEqual(60140m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Max(e => decimal.Parse(e.Price)));
+
+            Assert.AreEqual(60050m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Min(e => decimal.Parse(e.Price)));
+            Assert.AreEqual(60090m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Max(e => decimal.Parse(e.Price)));
         }
 
-        public Dictionary<string, List<string>> GetSourcesAndSymbols()
+        private void SetupEnvironment_1()
         {
-            throw new NotImplementedException();
-        }
-
-        public List<string> GetSymbols(string source)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> GetSourcesWithSymbol(string symbol)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> GetSources()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class MarketMakerSettingsAccessorMock: IMarketMakerSettingsAccessor
-    {
-        public MarketMakerSettings MmSettings { get; set; } = new(EngineMode.Disabled);
-
-        public List<MirroringLiquiditySettings> MlSettings { get; set; } = new();
-
-        public MarketMakerSettings GetMarketMakerSettings()
-        {
-            return MmSettings;
-        }
-
-        public List<MirroringLiquiditySettings> GetMirroringLiquiditySettingsList()
-        {
-            return MlSettings;
-        }
-    }
-
-    public class LpWalletManagerMock: ILpWalletManager
-    {
-        public Dictionary<string, Dictionary<string, WalletBalance>> Data { get; set; }= new();
-
-        public List<WalletBalance> GetBalances(string walletName)
-        {
-            if (Data.TryGetValue(walletName, out var data))
+            _settingsMock.MmSettings.Mode = EngineMode.Active;
+            _settingsMock.MlSettings.Add(new MirroringLiquiditySettings()
             {
-                return data.Values.ToList();
-            }
+                Mode = EngineMode.Active,
+                WalletName = "FTX",
+                ExternalMarket = ExchangeNames.FTX,
+                ExternalSymbol = "BTC/USD",
+                InstrumentSymbol = "BTCUSD",
+                Markup = 0
+            });
 
-            return new List<WalletBalance>();
-        }
-
-        public Task AddWalletAsync(LpWallet wallet)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task RemoveWalletAsync(string name)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<LpWallet> GetAll()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class TradingServiceClientMock : ITradingServiceClient
-    {
-        public List<MultiLimitOrder> CallList { get; set; } = new();
-
-        public Func<MultiLimitOrder, MultiLimitOrderResponse> MultiLimitOrderCallback { get; set; }
-
-        public MarketOrderResponse MarketOrder(MarketOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<MarketOrderResponse> MarketOrderAsync(MarketOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public LimitOrderResponse LimitOrder(LimitOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<LimitOrderResponse> LimitOrderAsync(LimitOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public LimitOrderCancelResponse CancelLimitOrder(LimitOrderCancel request,
-            CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<LimitOrderCancelResponse> CancelLimitOrderAsync(LimitOrderCancel request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public MultiLimitOrderResponse MultiLimitOrder(MultiLimitOrder request,
-            CancellationToken cancellationToken = new CancellationToken())
-        {
-            CallList.Add(request);
-
-            if (MultiLimitOrderCallback != null)
+            _walletManager.Wallets["FTX"] = new LpWallet()
             {
-                return MultiLimitOrderCallback.Invoke(request);
-            }
-
-            var resp = new MultiLimitOrderResponse()
-            {
-                Id = request.Id,
-                MessageId = request.MessageId,
-                AssetPairId = request.AssetPairId,
-                Status = Status.Ok,
-                WalletVersion = 0
+                BrokerId = "broker",
+                ClientId = "client",
+                WalletId = "ftx wallet",
+                Name = "FTX"
             };
 
-            foreach (var order in request.Orders)
+            _walletManager.Balances["FTX"] = new Dictionary<string, WalletBalance>()
             {
-                resp.Statuses.Add(new MultiLimitOrderResponse.Types.OrderStatus()
+                {"BTC", new WalletBalance("BTC", 5, 0, DateTime.UtcNow, 1)},
+                {"USD", new WalletBalance("USD", 300000, 0, DateTime.UtcNow, 1)}
+            };
+
+            _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
+            {
+                Symbol = "BTCUSD",
+                OriginalSymbol = "BTC/USD",
+                Source = ExchangeNames.FTX,
+                Timestamp = DateTime.UtcNow,
+                Asks = new List<LeOrderBookLevel>()
                 {
-                    Id = order.Id,
-                    MatchingEngineId = order.Id,
-                    Price = order.Price,
-                    Status = Status.Ok,
-                    Volume = order.Volume
-                });
-            }
-
-            return resp;
-        }
-
-        public Task<MultiLimitOrderResponse> MultiLimitOrderAsync(MultiLimitOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            return Task.FromResult(MultiLimitOrder(request));
+                    new LeOrderBookLevel(60100, 0.4),
+                    new LeOrderBookLevel(60110, 0.1),
+                    new LeOrderBookLevel(60120, 0.5),
+                    new LeOrderBookLevel(60130, 1),
+                    new LeOrderBookLevel(60140, 2),
+                },
+                Bids = new List<LeOrderBookLevel>()
+                {
+                    new LeOrderBookLevel(60090, 0.4),
+                    new LeOrderBookLevel(60080, 0.1),
+                    new LeOrderBookLevel(60070, 0.5),
+                    new LeOrderBookLevel(60060, 1),
+                    new LeOrderBookLevel(60050, 2)
+                }
+            };
         }
     }
 }

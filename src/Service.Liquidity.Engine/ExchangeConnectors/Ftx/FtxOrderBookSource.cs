@@ -11,14 +11,14 @@ namespace Service.Liquidity.Engine.ExchangeConnectors.Ftx
 {
     public class FtxOrderBookSource: IOrderBookSource, IDisposable
     {
-        private readonly Dictionary<string, string> _symbolToOriginalSymbol;
+        private readonly List<string> _symbolList;
 
         private readonly FtxWsOrderBooks _wsFtx;
 
-        public FtxOrderBookSource(ILoggerFactory loggerFactory, List<(string, string)> symbolAndOriginalSymbolList)
+        public FtxOrderBookSource(ILoggerFactory loggerFactory, List<string> symbolList)
         {
-            _symbolToOriginalSymbol = symbolAndOriginalSymbolList.ToDictionary(e => e.Item1, e => e.Item2);
-            _wsFtx = new FtxWsOrderBooks(loggerFactory.CreateLogger<FtxWsOrderBooks>(), _symbolToOriginalSymbol.Values.ToArray());
+            _symbolList = symbolList;
+            _wsFtx = new FtxWsOrderBooks(loggerFactory.CreateLogger<FtxWsOrderBooks>(), _symbolList.ToArray());
         }
 
         public string GetName()
@@ -28,22 +28,22 @@ namespace Service.Liquidity.Engine.ExchangeConnectors.Ftx
 
         public List<string> GetSymbols()
         {
-            return _symbolToOriginalSymbol.Keys.ToList();
+            return _symbolList.ToList();
         }
 
         public bool HasSymbol(string symbol)
         {
-            return _symbolToOriginalSymbol.Keys.Contains(symbol);
+            return _symbolList.Contains(symbol);
         }
 
         public LeOrderBook GetOrderBook(string symbol)
         {
-            if (!_symbolToOriginalSymbol.TryGetValue(symbol, out var originalSymbol))
+            if (!_symbolList.Contains(symbol))
             {
                 return null;
             }
 
-            var data = _wsFtx.GetOrderBookById(originalSymbol);
+            var data = _wsFtx.GetOrderBookById(symbol);
             
             if (data == null)
                 return null;
@@ -54,8 +54,7 @@ namespace Service.Liquidity.Engine.ExchangeConnectors.Ftx
                 Timestamp = data.GetTime().UtcDateTime,
                 Asks = data.asks.Select(LeOrderBookLevel.Create).Where(e => e != null).ToList(),
                 Bids = data.bids.Select(LeOrderBookLevel.Create).Where(e => e != null).ToList(),
-                Source = ExchangeNames.FTX,
-                OriginalSymbol = originalSymbol
+                Source = ExchangeNames.FTX
             };
 
             return book;

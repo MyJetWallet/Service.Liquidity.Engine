@@ -14,15 +14,13 @@ namespace Service.Liquidity.Engine.Modules
         {
             if (Program.Settings.FtxIsEnabled)
             {
-                List<(string, string)> ftxInstrumentList = Program.Settings.FtxInstrumentsOriginalSymbolToSymbol
-                    .Split(';').Where(e => !string.IsNullOrEmpty(e))
-                    .Select(e => e.Split(':')).Where(e => e.Length == 2)
-                    .Select(e => (e[1], e[0]))
+                List<string> ftxInstrumentList = Program.Settings.FtxInstrumentsOriginalSymbolToSymbol
+                    .Split(';')
                     .ToList();
 
                 builder
                     .RegisterType<FtxOrderBookSource>()
-                    .WithParameter("symbolAndOriginalSymbolList", ftxInstrumentList)
+                    .WithParameter("symbolList", ftxInstrumentList)
                     .AsSelf()
                     .As<IOrderBookSource>()
                     .SingleInstance();

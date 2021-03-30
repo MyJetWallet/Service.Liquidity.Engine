@@ -12,6 +12,7 @@ using Service.Liquidity.Engine.Domain.Services.MarketMakers;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
+using Service.Liquidity.Engine.Jobs;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -47,6 +48,16 @@ namespace Service.Liquidity.Engine.Modules
                 .RegisterType<MirroringLiquidityProvider>()
                 .As<IMarketMaker>()
                 .AutoActivate()
+                .SingleInstance();
+
+            builder
+                .RegisterType<OrderIdGenerator>()
+                .As<IOrderIdGenerator>()
+                .SingleInstance();
+
+            builder
+                .RegisterType<MarketMakerJob>()
+                .AsSelf()
                 .SingleInstance();
 
             

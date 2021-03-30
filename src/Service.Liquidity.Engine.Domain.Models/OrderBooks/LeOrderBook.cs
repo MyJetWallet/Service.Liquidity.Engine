@@ -17,7 +17,5 @@ namespace Service.Liquidity.Engine.Domain.Models.OrderBooks
         [DataMember(Order = 4)] public List<LeOrderBookLevel> Asks { get; set; }
 
         [DataMember(Order = 5)] public List<LeOrderBookLevel> Bids { get; set; }
-
-        [DataMember(Order = 6)] public string OriginalSymbol { get; set; }
     }
 }

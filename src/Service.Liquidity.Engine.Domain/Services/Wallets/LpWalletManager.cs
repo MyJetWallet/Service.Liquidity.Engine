@@ -35,18 +35,27 @@ namespace Service.Liquidity.Engine.Domain.Services.Wallets
 
         public List<WalletBalance> GetBalances(string walletName)
         {
-            LpWallet wallet;
-            lock (_sync)
-            {
-                if (!_data.TryGetValue(walletName, out wallet))
-                    return new List<WalletBalance>();
-            }
+            LpWallet wallet = GetWallet(walletName);
+
+            if (wallet == null)
+                return new List<WalletBalance>();
 
             var resp = _walletBalanceService
                 .GetWalletBalancesAsync(new GetWalletBalancesRequest() {WalletId = wallet.WalletId}).GetAwaiter()
                 .GetResult();
 
             return resp?.Balances ?? new List<WalletBalance>();
+        }
+
+        public LpWallet GetWallet(string walletName)
+        {
+            lock (_sync)
+            {
+                if (!_data.TryGetValue(walletName, out var wallet))
+                    return null;
+
+                return wallet;
+            }
         }
 
         public async Task AddWalletAsync(LpWallet wallet)

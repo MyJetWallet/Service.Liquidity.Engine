@@ -9,6 +9,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Wallets
     {
         List<WalletBalance> GetBalances(string walletName);
 
+        LpWallet GetWallet(string walletName);
+
         Task AddWalletAsync(LpWallet wallet);
 
         Task RemoveWalletAsync(string name);
