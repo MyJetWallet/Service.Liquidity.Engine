@@ -50,6 +50,7 @@ namespace Service.Liquidity.Engine
                 endpoints.MapGrpcSchema<HelloService, IHelloService>();
                 endpoints.MapGrpcSchema<OrderBookManagerGrpc, IOrderBookManagerGrpc>();
                 endpoints.MapGrpcSchema<LpWalletManagerGrpc, ILpWalletManagerGrpc>();
+                endpoints.MapGrpcSchema<MarketMakerSettingsManagerGrpc, IMarketMakerSettingsManagerGrpc>();
 
                 endpoints.MapGrpcSchemaRegistry();
 

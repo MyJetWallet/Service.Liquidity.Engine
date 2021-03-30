@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Service.Liquidity.Engine.Domain.Models\Service.Liquidity.Engine.Domain.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\Settings\" />
+  </ItemGroup>
+
 </Project>

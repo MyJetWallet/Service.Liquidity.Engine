@@ -1,25 +1,20 @@
-﻿namespace Service.Liquidity.Engine.Domain.Models.Settings
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
+
+namespace Service.Liquidity.Engine.Domain.Models.Settings
 {
+    [DataContract]
     public class MarketMakerSettings
     {
-        public EngineMode Mode { get; set; }
+        [DataMember(Order = 1)] public EngineMode Mode { get; set; }
 
+        public MarketMakerSettings()
+        {
+        }
 
-
-    }
-
-    public class MirroringLiquiditySettings
-    {
-        public EngineMode Mode { get; set; }
-
-        public string InstrumentSymbol { get; set; }
-
-        public string ExternalMarket { get; set; }
-
-        public string ExternalSymbol { get; set; }
-
-        public double Markup { get; set; }
-
-        public string WalletName { get; set; }
+        public MarketMakerSettings(EngineMode mode)
+        {
+            Mode = mode;
+        }
     }
 }

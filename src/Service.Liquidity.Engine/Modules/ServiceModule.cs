@@ -8,6 +8,7 @@ using Service.Balances.Client;
 using Service.Balances.Grpc;
 using Service.Liquidity.Engine.Domain.NoSql;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
+using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
 
 namespace Service.Liquidity.Engine.Modules
@@ -32,11 +33,23 @@ namespace Service.Liquidity.Engine.Modules
                 .AutoActivate()
                 .SingleInstance();
 
+            builder
+                .RegisterType<MarketMakerSettingsManager>()
+                .As<IMarketMakerSettingsManager>()
+                .As<IMarketMakerSettingsAccessor>()
+                .As<IStartable>()
+                .AutoActivate()
+                .SingleInstance();
+
             
             builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, _myNoSqlClient);
 
 
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
+            RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
+            RegisterMyNoSqlWriter<SettingsMirroringLiquidityNoSql>(builder, SettingsMirroringLiquidityNoSql.TableName);
+
+            
         }
 
         private void RegisterMyNoSqlTcpClient(ContainerBuilder builder)
