@@ -1,23 +1,100 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Autofac;
+using Microsoft.Extensions.Logging;
+using MyNoSqlServer.Abstractions;
+using Newtonsoft.Json;
+using Service.Balances.Domain.Models;
+using Service.Balances.Grpc;
+using Service.Balances.Grpc.Models;
+using Service.Liquidity.Engine.Domain.Models.Wallets;
+using Service.Liquidity.Engine.Domain.NoSql;
 
 namespace Service.Liquidity.Engine.Domain.Services.Wallets
 {
-    public class LpWalletManager : ILpWalletManager
+    public class LpWalletManager : ILpWalletManager, IStartable
     {
-        private readonly Dictionary<string, ILpWallet> _map;
+        private readonly ILogger<LpWalletManager> _logger;
+        private readonly IMyNoSqlServerDataWriter<LpWalletNoSql> _noSqlDataWriter;
+        private readonly IWalletBalanceService _walletBalanceService;
 
-        public LpWalletManager(ILpWallet[] lpWallets)
+        private readonly Dictionary<string, LpWallet> _data = new Dictionary<string, LpWallet>();
+        private readonly object _sync = new object();
+
+        public LpWalletManager(
+            ILogger<LpWalletManager> logger,
+            IMyNoSqlServerDataWriter<LpWalletNoSql> noSqlDataWriter,
+            IWalletBalanceService walletBalanceService)
         {
-            _map = lpWallets.ToDictionary(e => e.GetLpName());
+            _logger = logger;
+            _noSqlDataWriter = noSqlDataWriter;
+            _walletBalanceService = walletBalanceService;
         }
 
-        public ILpWallet GetWalletByLiquidityProvider(string lpName)
+        public List<WalletBalance> GetBalances(string walletName)
         {
-            if (!_map.TryGetValue(lpName, out var wallet))
-                return null;
+            LpWallet wallet;
+            lock (_sync)
+            {
+                if (!_data.TryGetValue(walletName, out wallet))
+                    return new List<WalletBalance>();
+            }
 
-            return wallet;
+            var resp = _walletBalanceService
+                .GetWalletBalancesAsync(new GetWalletBalancesRequest() {WalletId = wallet.WalletId}).GetAwaiter()
+                .GetResult();
+
+            return resp?.Balances ?? new List<WalletBalance>();
+        }
+
+        public async Task AddWalletAsync(LpWallet wallet)
+        {
+            var entity = LpWalletNoSql.Create(wallet);
+
+            await _noSqlDataWriter.InsertOrReplaceAsync(entity);
+
+            lock (_sync)
+            {
+                _data[wallet.Name] = wallet;
+            }
+
+            _logger.LogInformation("Added Wallet {name}: {jsonText}", wallet.Name, JsonConvert.SerializeObject(wallet));
+        }
+
+        public async Task RemoveWalletAsync(string name)
+        {
+            await _noSqlDataWriter.DeleteAsync(LpWalletNoSql.GeneratePartitionKey(), LpWalletNoSql.GenerateRowKey(name));
+
+            lock (_sync)
+            {
+                _data.Remove(name);
+            }
+
+            _logger.LogInformation("Deleted Wallet {name}", name);
+        }
+
+        public List<LpWallet> GetAll()
+        {
+            lock (_sync)
+            {
+                return _data.Values.ToList();
+            }
+        }
+
+        public void Start()
+        {
+            var data = _noSqlDataWriter.GetAsync().GetAwaiter().GetResult();
+
+            lock (_sync)
+            {
+                _data.Clear();
+                foreach (var item in data)
+                {
+                    _data[item.Wallet.Name] = item.Wallet;
+                }
+            }
         }
     }
 }

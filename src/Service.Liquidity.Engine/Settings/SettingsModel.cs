@@ -22,5 +22,8 @@ namespace Service.Liquidity.Engine.Settings
 
         [YamlProperty("LiquidityEngine.MyNoSqlReaderHostPort")]
         public string MyNoSqlReaderHostPort { get; set; }
+
+        [YamlProperty("LiquidityEngine.MyNoSqlWriterUrl")]
+        public string MyNoSqlWriterUrl { get; set; }
     }
 }

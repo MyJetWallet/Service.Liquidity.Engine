@@ -26,13 +26,7 @@ namespace Service.Liquidity.Engine.Modules
                     .AsSelf()
                     .As<IOrderBookSource>()
                     .SingleInstance();
-
-                builder
-                    .RegisterType<LpWallet>()
-                    .WithParameter("lpName", ExchangeNames.FTX)
-                    .WithParameter("walletId", Program.Settings.FtxWalletId)
-                    .As<ILpWallet>()
-                    .SingleInstance();
+                
             }
         }
     }

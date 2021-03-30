@@ -49,6 +49,7 @@ namespace Service.Liquidity.Engine
             {
                 endpoints.MapGrpcSchema<HelloService, IHelloService>();
                 endpoints.MapGrpcSchema<OrderBookManagerGrpc, IOrderBookManagerGrpc>();
+                endpoints.MapGrpcSchema<LpWalletManagerGrpc, ILpWalletManagerGrpc>();
 
                 endpoints.MapGrpcSchemaRegistry();
 
