@@ -1,12 +1,14 @@
 ﻿using Autofac;
 using Autofac.Core;
 using Autofac.Core.Registration;
+using MyJetWallet.MatchingEngine.Grpc;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using Service.Balances.Client;
 using Service.Balances.Grpc;
 using Service.Liquidity.Engine.Domain.NoSql;
+using Service.Liquidity.Engine.Domain.Services.MarketMakers;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
@@ -41,8 +43,15 @@ namespace Service.Liquidity.Engine.Modules
                 .AutoActivate()
                 .SingleInstance();
 
+            builder
+                .RegisterType<MirroringLiquidityProvider>()
+                .As<IMarketMaker>()
+                .AutoActivate()
+                .SingleInstance();
+
             
             builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, _myNoSqlClient);
+            builder.RegisterMatchingEngineGrpcClient(tradingServiceGrpcUrl: Program.Settings.MatchingEngineTradingServiceGrpcUrl);
 
 
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
