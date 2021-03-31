@@ -172,6 +172,11 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                             volume = baseBalance - baseVolumeTotal;
                         }
 
+                        if (baseVolumeTotal + volume > setting.MaxSellVolume)
+                        {
+                            volume = setting.MaxSellVolume - baseVolumeTotal;
+                        }
+
                         if (volume < (double) instrument.MinVolume)
                             continue;
 
@@ -217,6 +222,11 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                         if (quoteVolumeTotal + quoteVolume > quoteBalance)
                         {
                             volume = (quoteBalance - quoteVolumeTotal) / price;
+                        }
+
+                        if (quoteVolumeTotal + quoteVolume > setting.MaxBuyOppositeVolume)
+                        {
+                            volume = (setting.MaxBuyOppositeVolume - quoteVolumeTotal) / price;
                         }
 
                         if (volume < (double) instrument.MinVolume)
