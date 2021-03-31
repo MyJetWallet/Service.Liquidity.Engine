@@ -41,6 +41,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
         public async Task RefreshOrders()
         {
+            Console.WriteLine("Market maker refresh orders ...");
+
             var settings = _settingsAccessor.GetMirroringLiquiditySettingsList();
             var globalSetting = _settingsAccessor.GetMarketMakerSettings();
 
