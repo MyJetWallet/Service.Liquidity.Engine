@@ -6,7 +6,7 @@ namespace Service.Liquidity.Engine.Client
 {
     public static class AutofacHelper
     {
-        public static void RegisterSpotChangeBalanceGatewayClient(this ContainerBuilder builder, string liquidityEngineGrpcServiceUrl)
+        public static void RegisterLiquidityEngineClient(this ContainerBuilder builder, string liquidityEngineGrpcServiceUrl)
         {
             var factory = new LiquidityEngineClientFactory(liquidityEngineGrpcServiceUrl);
 
