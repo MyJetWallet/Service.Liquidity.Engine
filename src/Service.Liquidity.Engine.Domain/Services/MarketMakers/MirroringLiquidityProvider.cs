@@ -172,9 +172,9 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                             volume = baseBalance - baseVolumeTotal;
                         }
 
-                        if (baseVolumeTotal + volume > setting.MaxSellVolume)
+                        if (baseVolumeTotal + volume > setting.MaxSellSideVolume)
                         {
-                            volume = setting.MaxSellVolume - baseVolumeTotal;
+                            volume = setting.MaxSellSideVolume - baseVolumeTotal;
                         }
 
                         if (volume < (double) instrument.MinVolume)
@@ -203,6 +203,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 }
 
                 {
+                    var baseVolumeTotal = 0.0;
                     var quoteVolumeTotal = 0.0;
 
                     foreach (var level in externalBook.Bids)
@@ -224,9 +225,9 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                             volume = (quoteBalance - quoteVolumeTotal) / price;
                         }
 
-                        if (quoteVolumeTotal + quoteVolume > setting.MaxBuyOppositeVolume)
+                        if (baseVolumeTotal + volume > setting.MaxBuySideVolume)
                         {
-                            volume = (setting.MaxBuyOppositeVolume - quoteVolumeTotal) / price;
+                            volume = setting.MaxBuySideVolume - baseVolumeTotal;
                         }
 
                         if (volume < (double) instrument.MinVolume)
@@ -252,6 +253,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
                         quoteVolumeTotal += quoteVolume;
                         quoteVolumeTotal = Math.Round(quoteVolumeTotal, Mathematics.AccuracyToNormalizeDouble);
+
+                        baseVolumeTotal += volume;
                     }
                 }
             }

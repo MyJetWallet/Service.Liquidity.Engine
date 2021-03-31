@@ -412,7 +412,8 @@ namespace Service.Liquidity.Engine.Tests
         public async Task Check_MaxSellVolume()
         {
             SetupEnvironment_1();
-            _settingsMock.MlSettings.First().MaxSellVolume = 0.7;
+            _settingsMock.MlSettings.First().MaxSellSideVolume = 0.7;
+            _settingsMock.MlSettings.First().MaxBuySideVolume = 0.7;
 
             await _engine.RefreshOrders();
 
@@ -421,28 +422,6 @@ namespace Service.Liquidity.Engine.Tests
             Assert.IsNotNull(request);
 
             Assert.AreEqual(3, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
-            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
-
-            var orders = request.Orders.OrderBy(e => e.Price).ToArray();
-
-            Assert.AreEqual("-0.4", orders[5].Volume, "wrong price 6");
-            Assert.AreEqual("-0.1", orders[6].Volume, "wrong price 7");
-            Assert.AreEqual("-0.2", orders[7].Volume, "wrong price 8");
-        }
-
-        [Test]
-        public async Task Check_MaxBuyOppositeVolume()
-        {
-            SetupEnvironment_1();
-            _settingsMock.MlSettings.First().MaxBuyOppositeVolume = 42058;
-
-            await _engine.RefreshOrders();
-
-            var request = _tradingService.CallList.FirstOrDefault();
-
-            Assert.IsNotNull(request);
-
-            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
             Assert.AreEqual(3, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
 
             var orders = request.Orders.OrderBy(e => e.Price).ToArray();
@@ -450,8 +429,10 @@ namespace Service.Liquidity.Engine.Tests
             Assert.AreEqual("0.2", orders[0].Volume, "wrong price 1");
             Assert.AreEqual("0.1", orders[1].Volume, "wrong price 2");
             Assert.AreEqual("0.4", orders[2].Volume, "wrong price 3");
+            Assert.AreEqual("-0.4", orders[3].Volume, "wrong price 4");
+            Assert.AreEqual("-0.1", orders[4].Volume, "wrong price 5");
+            Assert.AreEqual("-0.2", orders[5].Volume, "wrong price 6");
         }
-
 
 
     }

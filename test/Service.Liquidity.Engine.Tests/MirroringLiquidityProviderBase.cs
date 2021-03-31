@@ -67,8 +67,8 @@ namespace Service.Liquidity.Engine.Tests
                 ExternalSymbol = "BTC/USD",
                 InstrumentSymbol = "BTCUSD",
                 Markup = 0,
-                MaxSellVolume = 10000,
-                MaxBuyOppositeVolume = 100000000
+                MaxSellSideVolume = 10000,
+                MaxBuySideVolume = 10000
             });
 
             _walletManager.Wallets["FTX"] = new LpWallet()
