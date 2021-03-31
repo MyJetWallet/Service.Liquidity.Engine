@@ -21,6 +21,8 @@ namespace Service.Liquidity.Engine.Client
             _channel = channel.Intercept(new PrometheusMetricsInterceptor());
         }
 
-        public IHelloService GetHelloService() => _channel.CreateGrpcService<IHelloService>();
+        public ILpWalletManagerGrpc GetLpWalletManagerGrpc() => _channel.CreateGrpcService<ILpWalletManagerGrpc>();
+        public IMarketMakerSettingsManagerGrpc GetMarketMakerSettingsManagerGrpc() => _channel.CreateGrpcService<IMarketMakerSettingsManagerGrpc>();
+        public IOrderBookManagerGrpc GetOrderBookManagerGrpc() => _channel.CreateGrpcService<IOrderBookManagerGrpc>();
     }
 }
