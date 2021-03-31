@@ -38,6 +38,8 @@ namespace Service.Liquidity.Engine.Jobs
             {
                 await marketMaker.RefreshOrders();
             }
+
+            _timer.ChangeInterval(TimeSpan.FromMilliseconds(_settingsAccessor.GetMarketMakerSettings().MarketMakerRefreshIntervalMSec));
         }
 
         public void Start()
