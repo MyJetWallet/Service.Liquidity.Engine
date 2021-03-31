@@ -117,8 +117,7 @@ namespace Service.Liquidity.Engine.Tests
 
             _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
             {
-                Symbol = "BTCUSD",
-                OriginalSymbol = "BTC/USD",
+                Symbol = "BTC/USD",
                 Source = ExchangeNames.FTX,
                 Timestamp = DateTime.UtcNow,
                 Asks = new List<LeOrderBookLevel>()

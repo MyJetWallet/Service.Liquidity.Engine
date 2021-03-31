@@ -5,6 +5,7 @@ using MyJetWallet.MatchingEngine.Grpc;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
+using Service.AssetsDictionary.Client;
 using Service.Balances.Client;
 using Service.Balances.Grpc;
 using Service.Liquidity.Engine.Domain.NoSql;
@@ -63,6 +64,7 @@ namespace Service.Liquidity.Engine.Modules
             
             builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, _myNoSqlClient);
             builder.RegisterMatchingEngineGrpcClient(tradingServiceGrpcUrl: Program.Settings.MatchingEngineTradingServiceGrpcUrl);
+            builder.RegisterAssetsDictionaryClients(_myNoSqlClient);
 
 
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
