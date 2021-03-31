@@ -15,12 +15,7 @@ namespace TestApp
             Console.Write("Press enter to start");
             Console.ReadLine();
 
-
-            var factory = new LiquidityEngineClientFactory("http://localhost:80");
-            var client = factory.GetHelloService();
-
-            var resp = await  client.SayHelloAsync(new HelloRequest(){Name = "Alex"});
-            Console.WriteLine(resp?.Message);
+            
 
             Console.WriteLine("End");
             Console.ReadLine();
