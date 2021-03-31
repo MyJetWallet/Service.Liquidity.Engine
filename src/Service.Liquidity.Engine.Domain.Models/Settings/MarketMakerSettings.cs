@@ -7,6 +7,8 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
     public class MarketMakerSettings
     {
         [DataMember(Order = 1)] public EngineMode Mode { get; set; }
+        [DataMember(Order = 2)] public int MarketMakerRefreshIntervalMSec { get; set; }
+
 
         public MarketMakerSettings()
         {

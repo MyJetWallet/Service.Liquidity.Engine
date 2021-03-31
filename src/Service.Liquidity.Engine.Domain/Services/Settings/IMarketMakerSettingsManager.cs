@@ -10,5 +10,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         Task AddOrUpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
 
         Task RemoveMirroringLiquiditySettingsAsync(string symbol, string walletName);
+
+        Task UpdateMarketMakerSettingsAsync(MarketMakerSettings settings);
     }
 }

@@ -28,5 +28,8 @@ namespace Service.Liquidity.Engine.Settings
 
         [YamlProperty("LiquidityEngine.MatchingEngine.TradingGrpcServiceUrl")]
         public string MatchingEngineTradingServiceGrpcUrl { get; set; }
+
+        [YamlProperty("LiquidityEngine.AccuracyToNormalizeDouble")]
+        public int AccuracyToNormalizeDouble { get; set; }
     }
 }

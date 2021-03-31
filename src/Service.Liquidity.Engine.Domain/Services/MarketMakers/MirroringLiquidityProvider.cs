@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using ME.Contracts.Api.IncomingMessages;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Domain.Assets;
 using MyJetWallet.MatchingEngine.Grpc.Api;
+using Service.AssetsDictionary.Client;
+using Service.Balances.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.Settings;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
@@ -14,6 +17,11 @@ using Service.Liquidity.Engine.Domain.Services.Wallets;
 
 namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 {
+    public static class Mathematics
+    {
+        public static int AccuracyToNormalizeDouble { get; set; } = 12;
+    }
+
     public class MirroringLiquidityProvider: IMarketMaker
     {
         private readonly ILogger<MirroringLiquidityProvider> _logger;
@@ -22,6 +30,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
         private readonly IMarketMakerSettingsAccessor _settingsAccessor;
         private readonly ILpWalletManager _walletManager;
         private readonly ITradingServiceClient _tradingServiceClient;
+        private readonly ISpotInstrumentDictionaryClient _instrumentDictionary;
+        private readonly IAssetsDictionaryClient _assetsDictionary;
 
         public MirroringLiquidityProvider(
             ILogger<MirroringLiquidityProvider> logger,
@@ -29,7 +39,9 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             IOrderBookManager orderBookManager,
             IMarketMakerSettingsAccessor settingsAccessor,
             ILpWalletManager walletManager,
-            ITradingServiceClient tradingServiceClient)
+            ITradingServiceClient tradingServiceClient,
+            ISpotInstrumentDictionaryClient instrumentDictionary,
+            IAssetsDictionaryClient assetsDictionary)
         {
             _logger = logger;
             _orderIdGenerator = orderIdGenerator;
@@ -37,6 +49,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             _settingsAccessor = settingsAccessor;
             _walletManager = walletManager;
             _tradingServiceClient = tradingServiceClient;
+            _instrumentDictionary = instrumentDictionary;
+            _assetsDictionary = assetsDictionary;
         }
 
         public async Task RefreshOrders()
@@ -72,13 +86,51 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 return;
             }
 
-            var localBalances = _walletManager.GetBalances(setting.WalletName);
-
-            if (!localBalances.Any())
+            var instrument = _instrumentDictionary.GetSpotInstrumentById(new SpotInstrumentIdentity()
             {
-                _logger.LogError("Cannot handle {symbol} [{wallet}]. Local balances is not found", setting.InstrumentSymbol, setting.WalletName);
+                BrokerId = localWallet.BrokerId,
+                Symbol = setting.InstrumentSymbol
+            });
+
+            if (instrument == null)
+            {
+                _logger.LogError("Cannot handle {symbol} [{wallet}]. Spot instrument do not found", setting.InstrumentSymbol, setting.WalletName);
                 return;
             }
+
+            if (!instrument.IsEnabled && setting.Mode == EngineMode.Active && globalSetting.Mode == EngineMode.Active)
+            {
+                _logger.LogError("Can not handle {symbol} [{wallet}]. Spot instrument do DISABLED", setting.InstrumentSymbol, setting.WalletName);
+            }
+
+            var baseAsset = _assetsDictionary.GetAssetById(new AssetIdentity()
+            {
+                BrokerId = instrument.BrokerId,
+                Symbol = instrument.BaseAsset
+            });
+
+            var quoteAsset = _assetsDictionary.GetAssetById(new AssetIdentity()
+            {
+                BrokerId = instrument.BrokerId,
+                Symbol = instrument.QuoteAsset
+            });
+
+            if (baseAsset == null)
+            {
+                _logger.LogError("Cannot handle {symbol} [{wallet}]. Base asset do not found", setting.InstrumentSymbol, setting.WalletName);
+                return;
+            }
+
+            if (quoteAsset == null)
+            {
+                _logger.LogError("Cannot handle {symbol} [{wallet}]. Quote asset do not found", setting.InstrumentSymbol, setting.WalletName);
+                return;
+            }
+
+            var localBalances = _walletManager.GetBalances(setting.WalletName);
+            var baseBalance = localBalances.FirstOrDefault(e => e.AssetId == baseAsset.Symbol)?.Balance ?? 0;
+            var quoteBalance = localBalances.FirstOrDefault(e => e.AssetId == quoteAsset.Symbol)?.Balance ?? 0;
+
 
             var orderBase = _orderIdGenerator.GenerateBase();
 
@@ -98,26 +150,99 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
             var orderIndex = 0;
 
-            if (globalSetting.Mode == EngineMode.Active && setting.Mode == EngineMode.Active)
+
+            if (globalSetting.Mode == EngineMode.Active && setting.Mode == EngineMode.Active && instrument.IsEnabled)
             {
-                foreach (var level in externalBook.Asks)
                 {
-                    request.Orders.Add(new MultiLimitOrder.Types.Order()
+                    var baseVolumeTotal = 0.0;
+
+                    foreach (var level in externalBook.Asks)
                     {
-                        Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex),
-                        Price = level.Price.ToString(CultureInfo.InvariantCulture),
-                        Volume = (-level.Volume).ToString(CultureInfo.InvariantCulture)
-                    });
+                        var price = level.Price;
+                        price = price + setting.Markup * price;
+
+                        price = Math.Round(price, Mathematics.AccuracyToNormalizeDouble);
+                        price = Math.Round(price, instrument.Accuracy, MidpointRounding.ToPositiveInfinity);
+
+
+                        var volume = level.Volume;
+
+                        if (baseVolumeTotal + volume > baseBalance)
+                        {
+                            volume = baseBalance - baseVolumeTotal;
+                        }
+
+                        if (volume < (double) instrument.MinVolume)
+                            continue;
+
+                        if (volume > (double) instrument.MaxVolume)
+                            volume = (double) instrument.MaxVolume;
+
+                        if (price * volume > (double) instrument.MaxOppositeVolume)
+                        {
+                            volume = (double) instrument.MaxOppositeVolume / price;
+                        }
+
+                        volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
+                        volume = Math.Round(volume, baseAsset.Accuracy, MidpointRounding.ToZero);
+
+                        request.Orders.Add(new MultiLimitOrder.Types.Order()
+                        {
+                            Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex),
+                            Price = price.ToString(CultureInfo.InvariantCulture),
+                            Volume = (-volume).ToString(CultureInfo.InvariantCulture)
+                        });
+
+                        baseVolumeTotal += volume;
+                    }
                 }
 
-                foreach (var level in externalBook.Bids)
                 {
-                    request.Orders.Add(new MultiLimitOrder.Types.Order()
+                    var quoteVolumeTotal = 0.0;
+
+                    foreach (var level in externalBook.Bids)
                     {
-                        Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex),
-                        Price = level.Price.ToString(CultureInfo.InvariantCulture),
-                        Volume = level.Volume.ToString(CultureInfo.InvariantCulture)
-                    });
+                        var price = level.Price;
+                        price = price - setting.Markup * price;
+
+                        price = Math.Round(price, Mathematics.AccuracyToNormalizeDouble);
+                        price = Math.Round(price, instrument.Accuracy, MidpointRounding.ToZero);
+
+                        var volume = level.Volume;
+
+                        var quoteVolume = price * volume;
+                        quoteVolume = Math.Round(quoteVolume, Mathematics.AccuracyToNormalizeDouble);
+                        quoteVolume = Math.Round(quoteVolume, quoteAsset.Accuracy, MidpointRounding.ToPositiveInfinity);
+
+                        if (quoteVolumeTotal + quoteVolume > quoteBalance)
+                        {
+                            volume = (quoteBalance - quoteVolumeTotal) / price;
+                        }
+
+                        if (volume < (double) instrument.MinVolume)
+                            continue;
+
+                        if (volume > (double) instrument.MaxVolume)
+                            volume = (double) instrument.MaxVolume;
+
+                        if (price * volume > (double) instrument.MaxOppositeVolume)
+                        {
+                            volume = (double) instrument.MaxOppositeVolume / price;
+                        }
+
+                        volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
+                        volume = Math.Round(volume, baseAsset.Accuracy, MidpointRounding.ToZero);
+
+                        request.Orders.Add(new MultiLimitOrder.Types.Order()
+                        {
+                            Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex),
+                            Price = price.ToString(CultureInfo.InvariantCulture),
+                            Volume = volume.ToString(CultureInfo.InvariantCulture)
+                        });
+
+                        quoteVolumeTotal += quoteVolume;
+                        quoteVolumeTotal = Math.Round(quoteVolumeTotal, Mathematics.AccuracyToNormalizeDouble);
+                    }
                 }
             }
 

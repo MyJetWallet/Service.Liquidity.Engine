@@ -64,6 +64,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             _logger.LogInformation("Removed MirroringLiquidity Settings: {symbol}, {walletName}", symbol, walletName);
         }
 
+        public async Task UpdateMarketMakerSettingsAsync(MarketMakerSettings settings)
+        {
+            var entity = SettingsMarketMakerNoSql.Create(settings);
+            await _marketMakerDataWriter.InsertOrReplaceAsync(entity);
+            await ReloadSettings();
+
+            _logger.LogInformation("Updated market maker settings: {jsonText}", JsonConvert.SerializeObject(settings));
+        }
+
         public MarketMakerSettings GetMarketMakerSettings()
         {
             lock (_sync)

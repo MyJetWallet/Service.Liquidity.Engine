@@ -9,6 +9,7 @@ using MyJetWallet.Sdk.GrpcMetrics;
 using MyJetWallet.Sdk.GrpcSchema;
 using Prometheus;
 using ProtoBuf.Grpc.Server;
+using Service.Liquidity.Engine.Domain.Services.MarketMakers;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.GrpcServices;
 using Service.Liquidity.Engine.Modules;
@@ -59,6 +60,8 @@ namespace Service.Liquidity.Engine
                     await context.Response.WriteAsync("Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
                 });
             });
+
+            Mathematics.AccuracyToNormalizeDouble = Program.Settings.AccuracyToNormalizeDouble;
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

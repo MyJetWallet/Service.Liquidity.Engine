@@ -4,19 +4,24 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service.Tools;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
+using Service.Liquidity.Engine.Domain.Services.Settings;
 
 namespace Service.Liquidity.Engine.Jobs
 {
     public class MarketMakerJob : IDisposable
     {
         private readonly IMarketMaker[] _marketMakers;
+        private readonly IMarketMakerSettingsAccessor _settingsAccessor;
         private MyTaskTimer _timer;
         private bool _isFirstRun = true;
 
-        public MarketMakerJob(ILogger<MarketMakerJob> logger, IMarketMaker[] marketMakers)
+        public MarketMakerJob(ILogger<MarketMakerJob> logger, IMarketMaker[] marketMakers, IMarketMakerSettingsAccessor settingsAccessor)
         {
             _marketMakers = marketMakers;
-            _timer = new MyTaskTimer(typeof(MarketMakerJob), TimeSpan.FromSeconds(10), logger, DoTime);
+            _settingsAccessor = settingsAccessor;
+            _timer = new MyTaskTimer(typeof(MarketMakerJob), 
+                TimeSpan.FromMilliseconds(settingsAccessor.GetMarketMakerSettings().MarketMakerRefreshIntervalMSec), 
+                logger, DoTime);
         }
 
         private async Task DoTime()
