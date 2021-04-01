@@ -31,5 +31,11 @@ namespace Service.Liquidity.Engine.Settings
 
         [YamlProperty("LiquidityEngine.AccuracyToNormalizeDouble")]
         public int AccuracyToNormalizeDouble { get; set; }
+
+        [YamlProperty("LiquidityEngine.SpotServiceBusHostPort")]
+        public string SpotServiceBusHostPort { get; set; }
+
+        [YamlProperty("LiquidityEngine.ServiceBusQuerySuffix")]
+        public string ServiceBusQuerySuffix { get; set; }
     }
 }

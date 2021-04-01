@@ -67,11 +67,18 @@ namespace Service.Liquidity.Engine.Modules
             builder.RegisterAssetsDictionaryClients(_myNoSqlClient);
 
 
+
+            
+
+
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMirroringLiquidityNoSql>(builder, SettingsMirroringLiquidityNoSql.TableName);
-
+            RegisterMyNoSqlWriter<WalletPortfolioNoSql>(builder, WalletPortfolioNoSql.TableName);
             
+
+
+
         }
 
         private void RegisterMyNoSqlTcpClient(ContainerBuilder builder)

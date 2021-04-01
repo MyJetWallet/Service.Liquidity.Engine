@@ -52,6 +52,8 @@ namespace Service.Liquidity.Engine
                 endpoints.MapGrpcSchema<OrderBookManagerGrpc, IOrderBookManagerGrpc>();
                 endpoints.MapGrpcSchema<LpWalletManagerGrpc, ILpWalletManagerGrpc>();
                 endpoints.MapGrpcSchema<MarketMakerSettingsManagerGrpc, IMarketMakerSettingsManagerGrpc>();
+                endpoints.MapGrpcSchema<WalletPortfolioGrpc, IWalletPortfolioGrpc>();
+                
 
                 endpoints.MapGrpcSchemaRegistry();
 
@@ -69,7 +71,8 @@ namespace Service.Liquidity.Engine
             builder.RegisterModule<SettingsModule>();
             builder.RegisterModule<ServiceModule>();
             builder.RegisterModule<ExternalExchangeModule>();
-            
+            builder.RegisterModule<HedgeServiceModule>();
+            builder.RegisterModule<ServiceBusModule>();
         }
     }
 }
