@@ -9,7 +9,7 @@ namespace Service.Liquidity.Engine.Client.ServiceBus
     public class PositionPortfolioSubscriber : Subscriber<PositionPortfolio>
     {
         public PositionPortfolioSubscriber(MyServiceBusTcpClient client, string queueName, TopicQueueType queryType)
-            : base(client, PortfolioTrade.TopicName, queueName, queryType, bytes => bytes.ByteArrayToServiceBusContract<PositionPortfolio>(), true)
+            : base(client, PositionPortfolio.TopicName, queueName, queryType, bytes => bytes.ByteArrayToServiceBusContract<PositionPortfolio>(), true)
         {
         }
     }
