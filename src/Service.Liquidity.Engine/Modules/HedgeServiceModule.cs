@@ -46,6 +46,11 @@ namespace Service.Liquidity.Engine.Modules
                 .RegisterType<InternalTradeReaderJob>()
                 .AutoActivate()
                 .SingleInstance();
+
+            builder
+                .RegisterType<PortfolioReport>()
+                .As<IPortfolioReport>()
+                .SingleInstance();
         }
     }
 }

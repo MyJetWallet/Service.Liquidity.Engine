@@ -8,6 +8,8 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
     [DataContract]
     public class PortfolioTrade
     {
+        public const string TopicName = "spot-liquidity-engine-trade";
+
         [DataMember(Order = 1)] public string TradeId { get; set; }
         [DataMember(Order = 2)] public string Source { get; set; }
         [DataMember(Order = 2)] public bool IsInternal { get; set; }
@@ -19,9 +21,9 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
         [DataMember(Order = 8)] public DateTime DateTime { get; set; }
         [DataMember(Order = 9)] public string ReferenceId { get; set; }
 
-        public PortfolioTrade(WalletTrade trade, string walletName)
+        public PortfolioTrade(WalletTrade trade, string walletId)
         {
-            Source = walletName;
+            Source = walletId;
             IsInternal = true;
             Symbol = trade.InstrumentSymbol;
             Price = trade.Price;
@@ -48,27 +50,4 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             ReferenceId = referenceId;
         }
     }
-
-    [DataContract]
-    public class PositionAssociation
-    {
-        [DataMember(Order = 1)] public string PositionId { get; set; }
-        [DataMember(Order = 2)] public string TradeId { get; set; }
-        [DataMember(Order = 3)] public string Source { get; set; }
-        [DataMember(Order = 4)] public bool IsInternalTrade { get; set; }
-
-        public PositionAssociation()
-        {
-        }
-
-        public PositionAssociation(string positionId, string tradeId, string source)
-        {
-            PositionId = positionId;
-            TradeId = tradeId;
-            Source = source;
-        }
-    }
-
-
-
 }

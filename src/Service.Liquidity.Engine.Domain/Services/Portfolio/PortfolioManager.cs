@@ -20,17 +20,20 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         private readonly ILogger<PortfolioManager> _logger;
         private readonly IPortfolioRepository _repository;
         private readonly ISpotInstrumentDictionaryClient _instrumentDictionary;
+        private readonly IPortfolioReport _portfolioReport;
         private Dictionary<string, Dictionary<string, PositionPortfolio>> _data = new();
         private readonly object _sync = new();
 
         public PortfolioManager(
             ILogger<PortfolioManager> logger,
             IPortfolioRepository repository, 
-            ISpotInstrumentDictionaryClient instrumentDictionary)
+            ISpotInstrumentDictionaryClient instrumentDictionary,
+            IPortfolioReport portfolioReport)
         {
             _logger = logger;
             _repository = repository;
             _instrumentDictionary = instrumentDictionary;
+            _portfolioReport = portfolioReport;
         }
 
         public async ValueTask RegisterLocalTrades(List<WalletTradeMessage> trades)
@@ -64,19 +67,24 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 if (reminder != 0)
                 {
-                    var reminderPosition = CreateNewPosition($"{baseId}-{index++}", trade);
-                    reminder = reminderPosition.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, reminder);
+                    var originalPosition = position;
 
-                    toUpdate[reminderPosition.Id] = reminderPosition;
+                    position = CreateNewPosition($"{baseId}-{index++}", trade);
+                    reminder = position.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, reminder);
+
+                    toUpdate[position.Id] = position;
 
                     if (reminder > 0)
                         _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
-                        JsonConvert.SerializeObject(new { reminder, position, reminderPosition }));
+                        JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
+
+                    await _portfolioReport.ReportClosePosition(originalPosition);
 
                     _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
                 }
 
-
+                await _portfolioReport.ReportInternalTrade(CreateLocalTrade(trade));
+                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
             }
 
             if (toUpdate.Any())
@@ -98,6 +106,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                     }
                 }
             }
+        }
+
+        private PortfolioTrade CreateLocalTrade(WalletTradeMessage trade)
+        {
+            var result = new PortfolioTrade(trade.Trade.TradeUId, trade.WalletId, true, trade.Trade.InstrumentSymbol,
+                trade.Trade.Side, trade.Trade.Price,
+                trade.Trade.BaseVolume, trade.Trade.QuoteVolume, trade.Trade.DateTime, string.Empty);
+
+            return result;
         }
 
         public Task<List<PositionPortfolio>> GetPortfolio()

@@ -8,6 +8,8 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
     [DataContract]
     public class PositionPortfolio
     {
+        public const string TopicName = "spot-liquidity-engine-closed-position";
+
         [DataMember(Order = 1)] public string Id { get; set; }
         [DataMember(Order = 2)] public string WalletId { get; set; }
         [DataMember(Order = 3)] public bool IsOpen { get; set; }
@@ -39,6 +41,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             {
                 BaseVolume += volume;
                 QuoteVolume += -1 * price * volume;
+                CloseTime = DateTime.UtcNow;
                 return 0m;
             }
 

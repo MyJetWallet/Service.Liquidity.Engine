@@ -39,7 +39,8 @@ namespace Service.Liquidity.Engine.Tests
             _manager = new PortfolioManager(
                 _loggerFactory.CreateLogger<PortfolioManager>(),
                 _repository,
-                _instrumentDictionary
+                _instrumentDictionary,
+                new PortfolioReportMock()
             );
         }
     }
