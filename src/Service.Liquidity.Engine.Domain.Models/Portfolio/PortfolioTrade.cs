@@ -35,7 +35,8 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             ReferenceId = string.Empty;
         }
 
-        public PortfolioTrade(string tradeId, string source, bool isInternal, string symbol, OrderSide side, double price, double baseVolume, 
+        public PortfolioTrade(string tradeId, string source, bool isInternal, string symbol, OrderSide side,
+            double price, double baseVolume,
             double quoteVolume, DateTime dateTime, string referenceId)
         {
             TradeId = tradeId;
@@ -48,6 +49,10 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             QuoteVolume = quoteVolume;
             DateTime = dateTime;
             ReferenceId = referenceId;
+        }
+
+        public PortfolioTrade()
+        {
         }
     }
 }
