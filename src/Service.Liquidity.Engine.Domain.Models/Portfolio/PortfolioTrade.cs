@@ -12,14 +12,14 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
 
         [DataMember(Order = 1)] public string TradeId { get; set; }
         [DataMember(Order = 2)] public string Source { get; set; }
-        [DataMember(Order = 2)] public bool IsInternal { get; set; }
-        [DataMember(Order = 3)] public string Symbol { get; set; }
-        [DataMember(Order = 4)] public OrderSide Side { get; set; }
-        [DataMember(Order = 5)] public double Price { get; set; }
-        [DataMember(Order = 6)] public double BaseVolume { get; set; }
-        [DataMember(Order = 7)] public double QuoteVolume { get; set; }
-        [DataMember(Order = 8)] public DateTime DateTime { get; set; }
-        [DataMember(Order = 9)] public string ReferenceId { get; set; }
+        [DataMember(Order = 3)] public bool IsInternal { get; set; }
+        [DataMember(Order = 4)] public string Symbol { get; set; }
+        [DataMember(Order = 5)] public OrderSide Side { get; set; }
+        [DataMember(Order = 6)] public double Price { get; set; }
+        [DataMember(Order = 7)] public double BaseVolume { get; set; }
+        [DataMember(Order = 8)] public double QuoteVolume { get; set; }
+        [DataMember(Order = 9)] public DateTime DateTime { get; set; }
+        [DataMember(Order = 10)] public string ReferenceId { get; set; }
 
         public PortfolioTrade(WalletTrade trade, string walletId)
         {
