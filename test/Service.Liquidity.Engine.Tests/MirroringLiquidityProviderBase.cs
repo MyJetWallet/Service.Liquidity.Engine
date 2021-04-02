@@ -16,7 +16,7 @@ namespace Service.Liquidity.Engine.Tests
     public class MirroringLiquidityProviderBase
     {
         protected MirroringLiquidityProvider _engine;
-        protected ILoggerFactory _loggerFactory;
+        protected static ILoggerFactory _loggerFactory;
 
         protected OrderBookManagerMock _orderBookManager;
         protected MarketMakerSettingsAccessorMock _settingsMock;

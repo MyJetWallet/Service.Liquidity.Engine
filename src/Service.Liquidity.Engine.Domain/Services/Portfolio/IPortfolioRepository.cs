@@ -6,7 +6,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {
     public interface IPortfolioRepository
     {
-        Task Update(WalletPortfolio portfolio);
-        Task<List<WalletPortfolio>> GetAll();
+        Task Update(List<PositionPortfolio> positions);
+        Task<List<PositionPortfolio>> GetAll();
     }
 }

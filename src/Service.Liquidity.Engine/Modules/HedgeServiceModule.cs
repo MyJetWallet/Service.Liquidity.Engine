@@ -3,6 +3,7 @@ using Autofac;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
+using Service.Liquidity.Engine.Jobs;
 using Service.Simulation.FTX.Client;
 
 namespace Service.Liquidity.Engine.Modules
@@ -38,6 +39,11 @@ namespace Service.Liquidity.Engine.Modules
                 .RegisterType<PortfolioManager>()
                 .As<IPortfolioManager>()
                 .As<IStartable>()
+                .AutoActivate()
+                .SingleInstance();
+
+            builder
+                .RegisterType<InternalTradeReaderJob>()
                 .AutoActivate()
                 .SingleInstance();
         }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Grpc;
@@ -15,9 +16,10 @@ namespace Service.Liquidity.Engine.GrpcServices
             _manager = manager;
         }
 
-        public Task<WalletPortfolio> GetPortfolioAsync(WalletNameRequest request)
+        public async Task<GrpcList<PositionPortfolio>> GetPortfolioAsync()
         {
-            return _manager.GetPortfolioByWalletName(request.WalletName);
+            var data = await _manager.GetPortfolio();
+            return GrpcList<PositionPortfolio>.Create(data);
         }
     }
 }

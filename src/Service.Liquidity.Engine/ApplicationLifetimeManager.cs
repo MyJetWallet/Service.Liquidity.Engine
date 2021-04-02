@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
@@ -50,7 +51,17 @@ namespace Service.Liquidity.Engine
 
             _logger.LogInformation("OnStopping has been called.");
             _myNoSqlClient.Stop();
-            _myServiceBusTcpClient.Stop();
+
+            try
+            {
+                _myServiceBusTcpClient.Stop();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception on MyServiceBusTcpClient.Stop: {ex}");
+            }
+
+            
             _ftxOrderBookSource.Stop();
         }
 

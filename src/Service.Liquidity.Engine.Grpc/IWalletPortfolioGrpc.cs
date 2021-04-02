@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
@@ -9,7 +10,8 @@ namespace Service.Liquidity.Engine.Grpc
     public interface IWalletPortfolioGrpc
     {
         [OperationContract]
-        Task<WalletPortfolio> GetPortfolioAsync(WalletNameRequest request);
+        Task<GrpcList<PositionPortfolio>> GetPortfolioAsync();
         
     }
+    
 }

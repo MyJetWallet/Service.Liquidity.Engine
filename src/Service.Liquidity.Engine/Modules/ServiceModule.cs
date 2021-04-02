@@ -74,7 +74,7 @@ namespace Service.Liquidity.Engine.Modules
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMirroringLiquidityNoSql>(builder, SettingsMirroringLiquidityNoSql.TableName);
-            RegisterMyNoSqlWriter<WalletPortfolioNoSql>(builder, WalletPortfolioNoSql.TableName);
+            RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
             
 
 
