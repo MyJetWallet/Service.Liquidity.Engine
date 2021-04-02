@@ -62,6 +62,11 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 toUpdate[position.Id] = position;
 
+                if (!position.IsOpen)
+                {
+                    await _portfolioReport.ReportClosePosition(position);
+                }
+
                 _logger.LogInformation("Register internal trade in portfolio: {jsonText}", JsonConvert.SerializeObject(trade));
                 _logger.LogInformation("Position is {actionText}: {jsonText}", action, JsonConvert.SerializeObject(position));
 
@@ -77,8 +82,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                     if (reminder > 0)
                         _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
                         JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
-
-                    await _portfolioReport.ReportClosePosition(originalPosition);
 
                     _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
                 }
