@@ -83,6 +83,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                         _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
                         JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
 
+                    await _portfolioReport.ReportPositionAssociation(new PositionAssociation(originalPosition.Id, trade.Trade.TradeUId, trade.WalletId, true));
                     _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
                 }
 
