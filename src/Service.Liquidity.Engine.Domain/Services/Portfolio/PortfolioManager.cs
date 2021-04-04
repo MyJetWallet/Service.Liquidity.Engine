@@ -59,6 +59,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                 }
 
                 var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, (decimal)trade.Trade.BaseVolume);
+                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
 
                 toUpdate[position.Id] = position;
 
@@ -76,6 +77,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                     position = CreateNewPosition($"{baseId}-{index++}", trade);
                     reminder = position.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, reminder);
+                    await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
 
                     toUpdate[position.Id] = position;
 
@@ -83,12 +85,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                         _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
                         JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
 
-                    await _portfolioReport.ReportPositionAssociation(new PositionAssociation(originalPosition.Id, trade.Trade.TradeUId, trade.WalletId, true));
                     _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
                 }
 
                 await _portfolioReport.ReportInternalTrade(CreateLocalTrade(trade));
-                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
             }
 
             if (toUpdate.Any())
