@@ -8,6 +8,7 @@ using MyJetWallet.Domain.Assets;
 using MyJetWallet.Domain.Orders;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
+using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
 using Service.AssetsDictionary.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
@@ -46,6 +47,12 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
             foreach (var trade in trades)
             {
+                using var activity = MyTelemetry.StartActivity("Process local trade")
+                    ?.AddTag("brokerId", trade.BrokerId)
+                    .AddTag("clientId", trade.ClientId)
+                    .AddTag("walletId", trade.WalletId)
+                    .AddTag("tradeId", trade.Trade.TradeUId);
+
                 var position = toUpdate.Values.FirstOrDefault(e => e.WalletId == trade.WalletId && e.Symbol == trade.Trade.InstrumentSymbol)
                                ?? GetPositionByWalletIdAndSymbol(trade.WalletId, trade.Trade.InstrumentSymbol);
 
@@ -58,6 +65,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                     if (position == null)
                         continue;
                 }
+
+                activity?.AddTag("position-action", action);
+                activity?.AddTag("positionId", position.Id);
+                
 
                 var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, (decimal)trade.Trade.BaseVolume);
                 await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
@@ -74,6 +85,12 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 if (reminder != 0)
                 {
+                    using var activityReminder = MyTelemetry.StartActivity("Create position for reminder")
+                        ?.AddTag("brokerId", trade.BrokerId)
+                        .AddTag("clientId", trade.ClientId)
+                        .AddTag("walletId", trade.WalletId)
+                        .AddTag("tradeId", trade.Trade.TradeUId);
+
                     var originalPosition = position;
 
                     position = CreateNewPosition($"{baseId}-{index++}", trade);
@@ -82,9 +99,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                     toUpdate[position.Id] = position;
 
+                    activity?.AddTag("position-action", "reminder");
+                    activity?.AddTag("positionId", position.Id);
+
                     if (reminder > 0)
+                    {
                         _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
                         JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
+                        activityReminder?.SetStatus(Status.Error);
+                    }
 
                     _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
                 }
