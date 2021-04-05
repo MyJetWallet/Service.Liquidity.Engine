@@ -5,14 +5,11 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.Assets;
-using MyJetWallet.Domain.Orders;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
-using Service.AssetsDictionary.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.Liquidity.Engine.Domain.Services.Wallets;
 using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
@@ -38,7 +35,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             _portfolioReport = portfolioReport;
         }
 
-        public async ValueTask RegisterLocalTrades(List<WalletTradeMessage> trades)
+        public async ValueTask RegisterLocalTradesAsync(List<WalletTradeMessage> trades)
         {
             var toUpdate = new Dictionary<string, PositionPortfolio>();
 
@@ -148,7 +145,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             return result;
         }
 
-        public Task<List<PositionPortfolio>> GetPortfolio()
+        public Task<List<PositionPortfolio>> GetPortfolioAsync()
         {
             lock (_sync)
             {

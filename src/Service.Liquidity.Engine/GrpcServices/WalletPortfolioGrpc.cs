@@ -18,7 +18,7 @@ namespace Service.Liquidity.Engine.GrpcServices
 
         public async Task<GrpcList<PositionPortfolio>> GetPortfolioAsync()
         {
-            var data = await _manager.GetPortfolio();
+            var data = await _manager.GetPortfolioAsync();
             return GrpcList<PositionPortfolio>.Create(data);
         }
     }

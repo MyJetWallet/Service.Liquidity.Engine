@@ -8,8 +8,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {
     public interface IPortfolioManager
     {
-        ValueTask RegisterLocalTrades(List<WalletTradeMessage> trades);
+        ValueTask RegisterLocalTradesAsync(List<WalletTradeMessage> trades);
 
-        Task<List<PositionPortfolio>> GetPortfolio();
+        Task<List<PositionPortfolio>> GetPortfolioAsync();
     }
 }

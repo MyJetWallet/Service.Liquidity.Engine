@@ -51,10 +51,10 @@ namespace Service.Liquidity.Engine.Tests
 
             _manager.Start();
 
-            var positions = (await _manager.GetPortfolio()).Where(e => e.WalletId == "TEST").ToList();
+            var positions = (await _manager.GetPortfolioAsync()).Where(e => e.WalletId == "TEST").ToList();
             positions.Select(e => e.Id).OrderBy(e => e).Should().BeEquivalentTo("1", "2");
 
-            positions = (await _manager.GetPortfolio()).Where(e => e.WalletId == "WALLET").ToList();
+            positions = (await _manager.GetPortfolioAsync()).Where(e => e.WalletId == "WALLET").ToList();
             positions.Select(e => e.Id).OrderBy(e => e).Should().BeEquivalentTo("3");
         }
 
@@ -81,9 +81,9 @@ namespace Service.Liquidity.Engine.Tests
                 }
             };
             
-            await _manager.RegisterLocalTrades(trades);
+            await _manager.RegisterLocalTradesAsync(trades);
 
-            var positions1 = await _manager.GetPortfolio();
+            var positions1 = await _manager.GetPortfolioAsync();
             Assert.AreEqual(1, positions1.Count);
             Assert.AreEqual("BTCUSD", positions1[0].Symbol);
             Assert.AreEqual(OrderSide.Buy, positions1[0].Side);
@@ -102,9 +102,9 @@ namespace Service.Liquidity.Engine.Tests
                 }
             };
 
-            await _manager.RegisterLocalTrades(trades);
+            await _manager.RegisterLocalTradesAsync(trades);
 
-            var positions2 = await _manager.GetPortfolio();
+            var positions2 = await _manager.GetPortfolioAsync();
             Assert.AreEqual(1, positions2.Count);
             Assert.AreEqual("BTCUSD", positions2[0].Symbol);
             Assert.AreEqual(OrderSide.Sell, positions2[0].Side);
@@ -128,9 +128,9 @@ namespace Service.Liquidity.Engine.Tests
                 }
             };
 
-            await _manager.RegisterLocalTrades(trades);
+            await _manager.RegisterLocalTradesAsync(trades);
 
-            var positions3 = await _manager.GetPortfolio();
+            var positions3 = await _manager.GetPortfolioAsync();
             Assert.AreEqual(0, positions3.Count);
 
             Assert.AreEqual(0, _repository.Data.Values.Count);

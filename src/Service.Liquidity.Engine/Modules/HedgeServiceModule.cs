@@ -2,6 +2,7 @@
 using Autofac;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx;
+using Service.Liquidity.Engine.Domain.Services.Hedger;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Jobs;
 using Service.Simulation.FTX.Client;
@@ -50,6 +51,11 @@ namespace Service.Liquidity.Engine.Modules
             builder
                 .RegisterType<PortfolioReport>()
                 .As<IPortfolioReport>()
+                .SingleInstance();
+
+            builder
+                .RegisterType<HedgeService>()
+                .As<IHedgeService>()
                 .SingleInstance();
         }
     }
