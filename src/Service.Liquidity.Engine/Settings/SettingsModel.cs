@@ -37,5 +37,8 @@ namespace Service.Liquidity.Engine.Settings
 
         [YamlProperty("LiquidityEngine.ServiceBusQuerySuffix")]
         public string ServiceBusQuerySuffix { get; set; }
+
+        [YamlProperty("LiquidityEngine.ZipkinUrl")]
+        public string ZipkinUrl { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.Assets;
 using MyJetWallet.Domain.Orders;
+using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using Service.AssetsDictionary.Client;
 using Service.AssetsDictionary.Domain.Models;
@@ -93,7 +94,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
             if (toUpdate.Any())
             {
-                await _repository.Update(toUpdate.Values.ToList());
+                using (var _ = MyTelemetry.StartActivity("Save position in repository")?.AddTag("position-count", toUpdate.Count))
+                {
+                    await _repository.Update(toUpdate.Values.ToList());
+                }
 
                 lock (_sync)
                 {

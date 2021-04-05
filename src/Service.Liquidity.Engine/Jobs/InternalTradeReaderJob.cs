@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using DotNetCoreDecorators;
+using MyJetWallet.Sdk.Service;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
 using Service.TradeHistory.ServiceBus;
@@ -23,13 +24,22 @@ namespace Service.Liquidity.Engine.Jobs
             subscriber.Subscribe(HandleTrades);
         }
 
-        private ValueTask HandleTrades(IReadOnlyList<WalletTradeMessage> trades)
+        private async ValueTask HandleTrades(IReadOnlyList<WalletTradeMessage> trades)
         {
+            //using var _ = MyTelemetry.StartActivity("Handle event ")
+
             var wallets = _walletManager.GetAll().Select(e => e.WalletId).ToList();
 
             var list = trades.Where(e => wallets.Contains(e.WalletId)).ToList();
 
-            return _manager.RegisterLocalTrades(list);
+            if (list.Any())
+            {
+                using var _ = MyTelemetry.StartActivity("Handle event WalletTradeMessage")?.AddTag("event-count", list.Count)?.AddTag("event-name", "WalletTradeMessage");
+
+                await _manager.RegisterLocalTrades(list);
+            }
+
+            
         }
     }
 }

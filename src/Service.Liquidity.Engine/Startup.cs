@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Autofac;
 using MyJetWallet.Sdk.GrpcMetrics;
 using MyJetWallet.Sdk.GrpcSchema;
+using MyJetWallet.Sdk.Service;
 using Prometheus;
 using ProtoBuf.Grpc.Server;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
@@ -29,6 +30,8 @@ namespace Service.Liquidity.Engine
             });
 
             services.AddHostedService<ApplicationLifetimeManager>();
+
+            services.AddMyTelemetry(Program.Settings.ZipkinUrl);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -48,7 +51,6 @@ namespace Service.Liquidity.Engine
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcSchema<HelloService, IHelloService>();
                 endpoints.MapGrpcSchema<OrderBookManagerGrpc, IOrderBookManagerGrpc>();
                 endpoints.MapGrpcSchema<LpWalletManagerGrpc, ILpWalletManagerGrpc>();
                 endpoints.MapGrpcSchema<MarketMakerSettingsManagerGrpc, IMarketMakerSettingsManagerGrpc>();

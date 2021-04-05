@@ -148,9 +148,7 @@ namespace Service.Liquidity.Engine.Tests
 
             var request = _tradingService.CallList.FirstOrDefault();
 
-            Assert.IsNotNull(request);
-
-            Assert.AreEqual(0, request.Orders.Count);
+            Assert.IsNull(request);
         }
 
         [Test]
