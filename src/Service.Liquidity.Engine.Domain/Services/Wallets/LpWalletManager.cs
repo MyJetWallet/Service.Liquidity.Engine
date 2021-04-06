@@ -58,6 +58,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Wallets
             }
         }
 
+        public LpWallet GetWalletById(string walletId)
+        {
+            lock (_sync)
+            {
+                var wallet = _data.Values.FirstOrDefault(e => e.WalletId == walletId);
+                return wallet;
+            }
+        }
+
         public async Task AddWalletAsync(LpWallet wallet)
         {
             var entity = LpWalletNoSql.Create(wallet);

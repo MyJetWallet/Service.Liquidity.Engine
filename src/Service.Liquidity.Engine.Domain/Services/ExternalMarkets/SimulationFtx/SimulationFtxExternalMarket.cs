@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic;
@@ -35,6 +36,13 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
             var resp = await _service.GetBalancesAsync();
             var balance = resp.Balances.FirstOrDefault(e => e.Symbol == asset)?.Amount ?? 0;
             return balance;
+        }
+
+        public async Task<Dictionary<string, double>> GetBalances()
+        {
+            var resp = await _service.GetBalancesAsync();
+            var result = resp.Balances.ToDictionary(e => e.Symbol, e => e.Amount);
+            return result;
         }
 
         public async Task<ExchangeMarketInfo> GetMarketInfo(string market)
@@ -122,7 +130,8 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
                 Volume = resp.Trade.Size,
                 Timestamp = resp.Trade.Timestamp,
                 Side = resp.Trade.Side == SimulationFtxOrderSide.Buy ? OrderSide.Buy : OrderSide.Sell,
-                OppositeVolume = Math.Round(resp.Trade.Price * resp.Trade.Size, marketInfo.OppositeVolumeAccuracy,  MidpointRounding.ToZero)
+                OppositeVolume = Math.Round(resp.Trade.Price * resp.Trade.Size, marketInfo.OppositeVolumeAccuracy,  MidpointRounding.ToZero),
+                Source = GetName()
             };
 
             return result;

@@ -9,12 +9,15 @@ using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
+using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
+using Service.Liquidity.Engine.Domain.Models.Wallets;
+using Service.Liquidity.Engine.Domain.Services.Wallets;
 using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {
-    public class PortfolioManager : IPortfolioManager, IStartable
+    public class PortfolioManager : IPortfolioManager
     {
         private readonly ILogger<PortfolioManager> _logger;
         private readonly IPortfolioRepository _repository;
@@ -136,11 +139,117 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
         }
 
+        public async Task RegisterHedgeTradeAsync(ExchangeTrade trade)
+        {
+            using var activity = MyTelemetry.StartActivity("Process external trade")
+                ?.AddTag("eternal-source", trade.Source)
+                .AddTag("tradeId", trade.Id)
+                .AddTag("symbol-external", trade.Market)
+                .AddTag("symbol", trade.AssociateSymbol)
+                .AddTag("walletId", trade.AssociateWalletId)
+                .AddTag("brokerId", trade.AssociateBrokerId);
+
+            var toUpdate = new List<PositionPortfolio>();
+
+            var position = GetPositionByWalletIdAndSymbol(trade.AssociateWalletId, trade.AssociateSymbol);
+            var reminderVolume = (decimal) trade.Volume;
+
+            if (position != null)
+            {
+                activity?.AddTag("positionId", position?.Id);
+
+                reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, (decimal) trade.Volume);
+                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
+
+                toUpdate.Add(position);
+
+                if (!position.IsOpen)
+                {
+                    await _portfolioReport.ReportClosePosition(position);
+                }
+
+                _logger.LogInformation("Register external trade in portfolio. Trade: {jsonText}", 
+                    JsonConvert.SerializeObject(trade));
+                
+                _logger.LogInformation("Position is updated: {jsonText}", JsonConvert.SerializeObject(position));
+            }
+
+            if (reminderVolume != 0)
+            {
+                using var activityReminder = MyTelemetry.StartActivity("Create position for reminder")
+                    ?.AddTag("eternal-source", trade.Source)
+                    .AddTag("tradeId", trade.Id)
+                    .AddTag("symbol-external", trade.Market)
+                    .AddTag("symbol", trade.AssociateSymbol)
+                    .AddTag("walletId", trade.AssociateWalletId);
+
+
+                var originalPosition = position;
+
+                var id = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                position = CreateNewPosition($"{id}", trade);
+
+                reminderVolume = position.ApplyTrade(trade.Side, (decimal)trade.Price, reminderVolume);
+                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
+
+                toUpdate.Add(position);
+
+                activity?.AddTag("position-action", "reminder");
+                activity?.AddTag("positionId", position.Id);
+
+                if (reminderVolume > 0)
+                {
+                    _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
+                        JsonConvert.SerializeObject(new { reminderVolume, originalPosition, position }));
+
+                    activityReminder?.SetStatus(Status.Error);
+                }
+
+                _logger.LogInformation("Reminder Position is created: {jsonText}", JsonConvert.SerializeObject(position));
+            }
+
+            await _portfolioReport.ReportExternalTrade(CreateExternalTrade(trade));
+            await _portfolioReport.ReportPositionUpdate(position);
+
+            if (toUpdate.Any())
+            {
+                using (var _ = MyTelemetry.StartActivity("Save position in repository")?.AddTag("position-count", toUpdate.Count))
+                {
+                    await _repository.Update(toUpdate.ToList());
+                }
+
+                lock (_sync)
+                {
+                    foreach (var pos in toUpdate.Where(e => !e.IsOpen))
+                    {
+                        _data[pos.WalletId].Remove(pos.Symbol);
+                    }
+
+                    foreach (var pos in toUpdate.Where(e => e.IsOpen))
+                    {
+                        if (!_data.ContainsKey(pos.WalletId))
+                            _data[pos.WalletId] = new Dictionary<string, PositionPortfolio>();
+                        _data[pos.WalletId][pos.Symbol] = pos;
+                    }
+                }
+            }
+        }
+
         private PortfolioTrade CreateLocalTrade(WalletTradeMessage trade)
         {
             var result = new PortfolioTrade(trade.Trade.TradeUId, trade.WalletId, true, trade.Trade.InstrumentSymbol,
                 trade.Trade.Side, trade.Trade.Price,
                 trade.Trade.BaseVolume, trade.Trade.QuoteVolume, trade.Trade.DateTime, string.Empty);
+
+            return result;
+        }
+
+        private PortfolioTrade CreateExternalTrade(ExchangeTrade trade)
+        {
+            var result = new PortfolioTrade(trade.Id, trade.Source, false, trade.Market,
+                trade.Side, trade.Price,
+                trade.Volume, trade.OppositeVolume, trade.Timestamp, trade.ReferenceId);
 
             return result;
         }
@@ -180,13 +289,59 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             };
         }
 
+        private PositionPortfolio CreateNewPosition(string id, ExchangeTrade trade)
+        {
+            var instrument = _instrumentDictionary.GetSpotInstrumentById(new SpotInstrumentIdentity()
+            {
+                BrokerId = trade.AssociateBrokerId,
+                Symbol = trade.AssociateSymbol
+            });
+
+            if (instrument == null)
+            {
+                _logger.LogError("Cannot found instrument to register trade: {jsonText}", JsonConvert.SerializeObject(trade));
+                return null;
+            }
+
+            return new PositionPortfolio()
+            {
+                Id = id,
+                Symbol = trade.AssociateSymbol,
+                BaseAsset = instrument.BaseAsset,
+                QuotesAsset = instrument.QuoteAsset,
+                IsOpen = true,
+                OpenTime = DateTime.UtcNow,
+                Side = trade.Side,
+                WalletId = trade.AssociateWalletId
+            };
+        }
+
         public void Start()
         {
             var data = _repository.GetAll().GetAwaiter().GetResult();
 
-            _data = data
-                .GroupBy(e => e.WalletId)
-                .ToDictionary(e => e.Key, e => e.ToDictionary(p => p.Symbol));
+
+            lock (_sync)
+            {
+                _data = new Dictionary<string, Dictionary<string, PositionPortfolio>>();
+
+                foreach (var walletPositions in data.GroupBy(e => e.WalletId))
+                {
+                    _data[walletPositions.Key] = new Dictionary<string, PositionPortfolio>();
+                    foreach (var symbolPositions in walletPositions.GroupBy(e => e.Symbol))
+                    {
+                        if (symbolPositions.Count() == 1)
+                        {
+                            _data[walletPositions.Key][symbolPositions.Key] = symbolPositions.First();
+                        }
+                        else
+                        {
+                            _logger.LogError("Load many position by one instrument. Will skip all. Positions: {jsonText}", 
+                                JsonConvert.SerializeObject(symbolPositions.ToList()));
+                        }
+                    }
+                }
+            }
         }
 
         private PositionPortfolio GetPositionByWalletIdAndSymbol(string walletId, string symbol)

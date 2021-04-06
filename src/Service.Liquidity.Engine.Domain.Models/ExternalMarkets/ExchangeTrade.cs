@@ -17,5 +17,11 @@ namespace Service.Liquidity.Engine.Domain.Models.ExternalMarkets
         [DataMember(Order = 7)] public double OppositeVolume { get; set; }
 
         [DataMember(Order = 8)] public DateTime Timestamp { get; set; }
+
+        [DataMember(Order = 9)] public string AssociateWalletId { get; set; }
+        [DataMember(Order = 10)] public string AssociateBrokerId { get; set; }
+        [DataMember(Order = 11)] public string AssociateClientId { get; set; }
+        [DataMember(Order = 12)] public string AssociateSymbol { get; set; }
+        [DataMember(Order = 13)] public string Source { get; set; }
     }
 }

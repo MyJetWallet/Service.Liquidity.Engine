@@ -11,7 +11,7 @@ using Service.Liquidity.Engine.Domain.NoSql;
 
 namespace Service.Liquidity.Engine.Domain.Services.Settings
 {
-    public class MarketMakerSettingsManager : IMarketMakerSettingsManager, IMarketMakerSettingsAccessor, IStartable
+    public class MarketMakerSettingsManager : IMarketMakerSettingsManager, IMarketMakerSettingsAccessor
     {
         private readonly ILogger<MarketMakerSettingsManager> _logger;
         private readonly IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> _marketMakerDataWriter;

@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <Folder Include="Services\ExternalMarkets\SimulationFtx\" />
-    <Folder Include="Services\Settings\" />
   </ItemGroup>
 
 </Project>

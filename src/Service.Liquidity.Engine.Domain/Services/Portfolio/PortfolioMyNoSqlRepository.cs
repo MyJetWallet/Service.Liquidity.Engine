@@ -36,6 +36,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
             if (list.Any())
                 await Task.WhenAll(list);
+
+
         }
 
         public async Task<List<PositionPortfolio>> GetAll()

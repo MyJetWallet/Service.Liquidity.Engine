@@ -33,6 +33,11 @@ namespace Service.Liquidity.Engine.Tests
             return wallet;
         }
 
+        public LpWallet GetWalletById(string walletId)
+        {
+            return Wallets.Values.FirstOrDefault(e => e.WalletId == walletId);
+        }
+
         public Task AddWalletAsync(LpWallet wallet)
         {
             throw new NotImplementedException();

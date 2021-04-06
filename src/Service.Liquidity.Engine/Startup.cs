@@ -55,6 +55,8 @@ namespace Service.Liquidity.Engine
                 endpoints.MapGrpcSchema<LpWalletManagerGrpc, ILpWalletManagerGrpc>();
                 endpoints.MapGrpcSchema<MarketMakerSettingsManagerGrpc, IMarketMakerSettingsManagerGrpc>();
                 endpoints.MapGrpcSchema<WalletPortfolioGrpc, IWalletPortfolioGrpc>();
+                endpoints.MapGrpcSchema<ExternalMarketsGrpc, IExternalMarketsGrpc>();
+                endpoints.MapGrpcSchema<HedgeSettingsManagerGrpc, IHedgeSettingsManagerGrpc>();
                 
 
                 endpoints.MapGrpcSchemaRegistry();

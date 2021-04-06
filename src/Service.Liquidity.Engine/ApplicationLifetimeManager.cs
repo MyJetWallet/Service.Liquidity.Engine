@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
+using Service.Liquidity.Engine.Domain.Services.Portfolio;
+using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.ExchangeConnectors.Ftx;
 using Service.Liquidity.Engine.Jobs;
 
@@ -17,6 +19,9 @@ namespace Service.Liquidity.Engine
         private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
         private readonly FtxOrderBookSource _ftxOrderBookSource;
         private readonly MarketMakerJob _marketMakerJob;
+        private readonly HedgeSettingsManager _hedgeSettingsManager;
+        private readonly MarketMakerSettingsManager _marketMakerSettingsManager;
+        private readonly PortfolioManager _portfolioManager;
 
         public ApplicationLifetimeManager(
             IHostApplicationLifetime appLifetime, 
@@ -24,7 +29,10 @@ namespace Service.Liquidity.Engine
             MyNoSqlTcpClient myNoSqlClient,
             MyServiceBusTcpClient myServiceBusTcpClient,
             FtxOrderBookSource ftxOrderBookSource,
-            MarketMakerJob marketMakerJob)
+            MarketMakerJob marketMakerJob,
+            HedgeSettingsManager hedgeSettingsManager,
+            MarketMakerSettingsManager marketMakerSettingsManager,
+            PortfolioManager portfolioManager)
             : base(appLifetime)
         {
             _logger = logger;
@@ -32,11 +40,19 @@ namespace Service.Liquidity.Engine
             _myServiceBusTcpClient = myServiceBusTcpClient;
             _ftxOrderBookSource = ftxOrderBookSource;
             _marketMakerJob = marketMakerJob;
+            _hedgeSettingsManager = hedgeSettingsManager;
+            _marketMakerSettingsManager = marketMakerSettingsManager;
+            _portfolioManager = portfolioManager;
         }
 
         protected override void OnStarted()
         {
             _logger.LogInformation("OnStarted has been called.");
+            _hedgeSettingsManager.Start();
+            _marketMakerSettingsManager.Start();
+            _portfolioManager.Start();
+
+
             _myNoSqlClient.Start();
             _myServiceBusTcpClient.Start();
             _ftxOrderBookSource.Start();

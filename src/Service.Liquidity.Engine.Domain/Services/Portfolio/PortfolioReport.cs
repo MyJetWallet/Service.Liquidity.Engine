@@ -39,7 +39,31 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
         }
 
+        public async Task ReportExternalTrade(PortfolioTrade trade)
+        {
+            try
+            {
+                await _tradePublisher.PublishAsync(trade);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot publish PortfolioTrade: {jsonText}", JsonConvert.SerializeObject(trade));
+            }
+        }
+
         public async Task ReportClosePosition(PositionPortfolio position)
+        {
+            try
+            {
+                await _closePositionPublisher.PublishAsync(position);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot publish PositionPortfolio: {jsonText}", JsonConvert.SerializeObject(position));
+            }
+        }
+
+        public async Task ReportPositionUpdate(PositionPortfolio position)
         {
             try
             {

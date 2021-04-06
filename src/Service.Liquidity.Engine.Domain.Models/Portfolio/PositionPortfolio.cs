@@ -8,7 +8,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
     [DataContract]
     public class PositionPortfolio
     {
-        public const string TopicName = "spot-liquidity-engine-closed-position";
+        public const string TopicName = "spot-liquidity-engine-position-update";
 
         [DataMember(Order = 1)] public string Id { get; set; }
         [DataMember(Order = 2)] public string WalletId { get; set; }

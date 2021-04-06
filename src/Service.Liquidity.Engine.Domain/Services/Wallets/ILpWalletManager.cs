@@ -11,6 +11,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Wallets
 
         LpWallet GetWallet(string walletName);
 
+        LpWallet GetWalletById(string walletId);
+
         Task AddWalletAsync(LpWallet wallet);
 
         Task RemoveWalletAsync(string name);

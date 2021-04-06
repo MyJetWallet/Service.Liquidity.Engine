@@ -12,6 +12,7 @@ namespace Service.Liquidity.Engine.Tests
         protected PortfolioManager _manager;
         protected PortfolioRepositoryMock _repository;
         protected SpotInstrumentDictionaryMock _instrumentDictionary;
+        protected PortfolioReportMock _portfolioReport;
 
         [SetUp]
         public void Setup()
@@ -21,11 +22,13 @@ namespace Service.Liquidity.Engine.Tests
             {
                 Symbol = "BTCUSD",
                 BaseAsset = "BTC",
-                QuoteAsset = "USD"
+                QuoteAsset = "USD",
+                BrokerId = "broker"
             });
 
             _repository = new PortfolioRepositoryMock();
 
+            _portfolioReport = new PortfolioReportMock();
 
             _loggerFactory =
                 LoggerFactory.Create(builder =>
@@ -40,7 +43,7 @@ namespace Service.Liquidity.Engine.Tests
                 _loggerFactory.CreateLogger<PortfolioManager>(),
                 _repository,
                 _instrumentDictionary,
-                new PortfolioReportMock()
+                _portfolioReport
             );
         }
     }

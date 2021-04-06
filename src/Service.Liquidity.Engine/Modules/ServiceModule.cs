@@ -41,8 +41,7 @@ namespace Service.Liquidity.Engine.Modules
                 .RegisterType<MarketMakerSettingsManager>()
                 .As<IMarketMakerSettingsManager>()
                 .As<IMarketMakerSettingsAccessor>()
-                .As<IStartable>()
-                .AutoActivate()
+                .AsSelf()
                 .SingleInstance();
 
             builder
@@ -75,10 +74,8 @@ namespace Service.Liquidity.Engine.Modules
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMirroringLiquidityNoSql>(builder, SettingsMirroringLiquidityNoSql.TableName);
             RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
-            
-
-
-
+            RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(builder, SettingsHedgeGlobalNoSql.TableName);
+            RegisterMyNoSqlWriter<SettingsHedgeInstrumentNoSql>(builder, SettingsHedgeInstrumentNoSql.TableName);
         }
 
         private void RegisterMyNoSqlTcpClient(ContainerBuilder builder)

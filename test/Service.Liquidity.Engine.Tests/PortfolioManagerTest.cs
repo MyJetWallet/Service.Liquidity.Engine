@@ -7,6 +7,7 @@ using MyJetWallet.Domain.Orders;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Service.AssetsDictionary.Client;
+using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 using Service.TradeHistory.Domain.Models;
 using Service.TradeHistory.ServiceBus;
@@ -135,6 +136,178 @@ namespace Service.Liquidity.Engine.Tests
 
             Assert.AreEqual(0, _repository.Data.Values.Count);
 
+        }
+
+        [Test]
+        public async Task ExternalTrade_PartialHedge()
+        {
+            _repository.Data["1"] = new PositionPortfolio()
+            {
+                Id = "1",
+                WalletId = "TEST",
+                Symbol = "BTCUSD",
+                IsOpen = true,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 2,
+                QuoteVolume = -20000,
+                OpenTime = DateTime.UtcNow
+            };
+
+            _manager.Start();
+
+            var trade = new ExchangeTrade()
+            {
+                Id = "11",
+                Price = 11000,
+                Volume = -1,
+                Side = OrderSide.Sell,
+                Market = "BTC/USD",
+                OppositeVolume = 11000,
+                Timestamp = DateTime.UtcNow,
+                ReferenceId = "1",
+
+                Source = "FTX",
+                AssociateSymbol = "BTCUSD",
+                AssociateBrokerId = "broker",
+                AssociateWalletId = "TEST"
+            };
+
+            await _manager.RegisterHedgeTradeAsync(trade);
+
+            var position = _repository.Data["1"];
+
+            position.Should().BeEquivalentTo(new 
+            {
+                IsOpen = true,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 1,
+                QuoteVolume = -9000
+            });
+        }
+
+        [Test]
+        public async Task ExternalTrade_FullHedge()
+        {
+            _repository.Data["1"] = new PositionPortfolio()
+            {
+                Id = "1",
+                WalletId = "TEST",
+                Symbol = "BTCUSD",
+                IsOpen = true,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 2,
+                QuoteVolume = -20000,
+                OpenTime = DateTime.UtcNow
+            };
+
+            _manager.Start();
+
+            var trade = new ExchangeTrade()
+            {
+                Id = "11",
+                Price = 11000,
+                Volume = -2,
+                Side = OrderSide.Sell,
+                Market = "BTC/USD",
+                OppositeVolume = 22000,
+                Timestamp = DateTime.UtcNow,
+                ReferenceId = "1",
+
+                Source = "FTX",
+                AssociateSymbol = "BTCUSD",
+                AssociateBrokerId = "broker",
+                AssociateWalletId = "TEST"
+            };
+
+            await _manager.RegisterHedgeTradeAsync(trade);
+
+            _repository.Data.Should().BeEmpty();
+            _portfolioReport.ClosedPosition.Should().HaveCount(1);
+
+            var position = _portfolioReport.ClosedPosition.First();
+
+            position.Should().BeEquivalentTo(new
+            {
+                IsOpen = false,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 0,
+                QuoteVolume = 2000
+            });
+            
+        }
+
+        [Test]
+        public async Task ExternalTrade_OverHedge()
+        {
+            _repository.Data["1"] = new PositionPortfolio()
+            {
+                Id = "1",
+                WalletId = "TEST",
+                Symbol = "BTCUSD",
+                IsOpen = true,
+                Side = OrderSide.Sell,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = -2,
+                QuoteVolume = 20000,
+                OpenTime = DateTime.UtcNow
+            };
+
+            _manager.Start();
+
+            var trade = new ExchangeTrade()
+            {
+                Id = "11",
+                Price = 11000,
+                Volume = 3,
+                Side = OrderSide.Buy,
+                Market = "BTC/USD",
+                OppositeVolume = -33000,
+                Timestamp = DateTime.UtcNow,
+                ReferenceId = "1",
+
+                Source = "FTX",
+                AssociateSymbol = "BTCUSD",
+                AssociateBrokerId = "broker",
+                AssociateWalletId = "TEST"
+            };
+
+            await _manager.RegisterHedgeTradeAsync(trade);
+
+            _repository.Data.Should().HaveCount(1);
+            _portfolioReport.ClosedPosition.Should().HaveCount(1);
+
+            var position = _portfolioReport.ClosedPosition.First();
+
+            position.Should().BeEquivalentTo(new
+            {
+                IsOpen = false,
+                Side = OrderSide.Sell,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 0,
+                QuoteVolume = -2000
+            });
+
+            position = _repository.Data.Values.First();
+
+            position.Should().BeEquivalentTo(new
+            {
+                IsOpen = true,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 1,
+                QuoteVolume = -11000
+            });
         }
     }
 }
