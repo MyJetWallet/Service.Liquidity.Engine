@@ -13,18 +13,18 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         private readonly ILogger<PortfolioReport> _logger;
         private readonly IPublisher<PortfolioTrade> _tradePublisher;
         private readonly IPublisher<PositionAssociation> _associationPublisher;
-        private readonly IPublisher<PositionPortfolio> _closePositionPublisher;
+        private readonly IPublisher<PositionPortfolio> _positionPublisher;
 
         public PortfolioReport(
             ILogger<PortfolioReport> logger,
             IPublisher<PortfolioTrade> tradePublisher,
             IPublisher<PositionAssociation> associationPublisher,
-            IPublisher<PositionPortfolio> closePositionPublisher)
+            IPublisher<PositionPortfolio> positionPublisher)
         {
             _logger = logger;
             _tradePublisher = tradePublisher;
             _associationPublisher = associationPublisher;
-            _closePositionPublisher = closePositionPublisher;
+            _positionPublisher = positionPublisher;
         }
 
         public async Task ReportInternalTrade(PortfolioTrade trade)
@@ -43,7 +43,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         {
             try
             {
-                await _tradePublisher.PublishAsync(trade);
+                //await _tradePublisher.PublishAsync(trade);
             }
             catch (Exception ex)
             {
@@ -51,23 +51,11 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
         }
 
-        public async Task ReportClosePosition(PositionPortfolio position)
-        {
-            try
-            {
-                await _closePositionPublisher.PublishAsync(position);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Cannot publish PositionPortfolio: {jsonText}", JsonConvert.SerializeObject(position));
-            }
-        }
-
         public async Task ReportPositionUpdate(PositionPortfolio position)
         {
             try
             {
-                await _closePositionPublisher.PublishAsync(position);
+                await _positionPublisher.PublishAsync(position);
             }
             catch (Exception ex)
             {

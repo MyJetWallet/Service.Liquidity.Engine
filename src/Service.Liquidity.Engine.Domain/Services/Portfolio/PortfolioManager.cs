@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.Assets;
 using MyJetWallet.Sdk.Service;
@@ -11,8 +10,6 @@ using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
 using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.Liquidity.Engine.Domain.Models.Wallets;
-using Service.Liquidity.Engine.Domain.Services.Wallets;
 using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
@@ -70,15 +67,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                 activity?.AddTag("positionId", position.Id);
                 
 
-                var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, (decimal)trade.Trade.BaseVolume);
-                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
+                var reminder = await ApplyTradeToPosition(position, trade, true);
 
                 toUpdate[position.Id] = position;
-
-                if (!position.IsOpen)
-                {
-                    await _portfolioReport.ReportClosePosition(position);
-                }
 
                 _logger.LogInformation("Register internal trade in portfolio: {jsonText}", JsonConvert.SerializeObject(trade));
                 _logger.LogInformation("Position is {actionText}: {jsonText}", action, JsonConvert.SerializeObject(position));
@@ -94,8 +85,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                     var originalPosition = position;
 
                     position = CreateNewPosition($"{baseId}-{index++}", trade);
-                    reminder = position.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, reminder);
-                    await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
+
+                    reminder = await ApplyTradeToPosition(position, trade, true);
 
                     toUpdate[position.Id] = position;
 
@@ -104,7 +95,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                     if (reminder > 0)
                     {
-                        _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
+                        _logger.LogError("After create reminder position, reminder still not zero. Trace: {jsonText}",
                         JsonConvert.SerializeObject(new { reminder, originalPosition, position }));
                         activityReminder?.SetStatus(Status.Error);
                     }
@@ -117,26 +108,42 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
             if (toUpdate.Any())
             {
-                using (var _ = MyTelemetry.StartActivity("Save position in repository")?.AddTag("position-count", toUpdate.Count))
+                using var _ = MyTelemetry.StartActivity("Save position updates")?.AddTag("position-count", toUpdate.Count);
+                foreach (var position in toUpdate.Values)
                 {
-                    await _repository.Update(toUpdate.Values.ToList());
-                }
-
-                lock (_sync)
-                {
-                    foreach (var position in toUpdate.Values.Where(e => !e.IsOpen))
-                    {
-                        _data[position.WalletId].Remove(position.Symbol);
-                    }
-
-                    foreach (var position in toUpdate.Values.Where(e => e.IsOpen))
-                    {
-                        if (!_data.ContainsKey(position.WalletId))
-                            _data[position.WalletId] = new Dictionary<string, PositionPortfolio>();
-                        _data[position.WalletId][position.Symbol] = position;
-                    }
+                    await UpdatePositionAndReport(position);
                 }
             }
+        }
+
+        private async Task<decimal> ApplyTradeToPosition(PositionPortfolio position, WalletTradeMessage trade, bool isInternal)
+        {
+            var reminder = position.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, (decimal) trade.Trade.BaseVolume);
+
+            await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, isInternal));
+
+            return reminder;
+        }
+
+        private async Task UpdatePositionAndReport(PositionPortfolio position)
+        {
+            await _repository.Update(new List<PositionPortfolio>() { position });
+
+            lock (_sync)
+            {
+                if (position.IsOpen)
+                {
+                    if (!_data.ContainsKey(position.WalletId))
+                        _data[position.WalletId] = new Dictionary<string, PositionPortfolio>();
+                    _data[position.WalletId][position.Symbol] = position;
+                }
+                else
+                {
+                    _data[position.WalletId].Remove(position.Symbol);
+                }
+            }
+
+            await _portfolioReport.ReportPositionUpdate(position);
         }
 
         public async Task RegisterHedgeTradeAsync(ExchangeTrade trade)
@@ -156,17 +163,12 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
             if (position != null)
             {
-                activity?.AddTag("positionId", position?.Id);
+                activity?.AddTag("positionId", position.Id);
 
                 reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, (decimal) trade.Volume);
                 await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
 
                 toUpdate.Add(position);
-
-                if (!position.IsOpen)
-                {
-                    await _portfolioReport.ReportClosePosition(position);
-                }
 
                 _logger.LogInformation("Register external trade in portfolio. Trade: {jsonText}", 
                     JsonConvert.SerializeObject(trade));
@@ -200,7 +202,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 if (reminderVolume > 0)
                 {
-                    _logger.LogError("After create reminder position, reminder still not zero. Trace: {josnText}",
+                    _logger.LogError("After create reminder position, reminder still not zero. Trace: {jsonText}",
                         JsonConvert.SerializeObject(new { reminderVolume, originalPosition, position }));
 
                     activityReminder?.SetStatus(Status.Error);
