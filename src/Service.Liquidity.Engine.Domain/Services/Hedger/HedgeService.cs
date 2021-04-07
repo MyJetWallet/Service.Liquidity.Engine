@@ -56,7 +56,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
         private async Task HedgePositionAsync(PositionPortfolio positionPortfolio)
         {
             using var activity = MyTelemetry.StartActivity("Hedge portfolio position");
-            activity?.AddTag("positionId", positionPortfolio.Id).AddTag("symbol", positionPortfolio.Symbol);
+            
+            activity?.AddTag("positionId", positionPortfolio.Id)
+                     .AddTag("symbol", positionPortfolio.Symbol);
 
             var settings = _settingsManager.GetGlobalHedgeSettings();
             var instrumentSettings = _instrumentSettingsManager.GetHedgeInstrumentSettings(positionPortfolio.Symbol, positionPortfolio.WalletId);
