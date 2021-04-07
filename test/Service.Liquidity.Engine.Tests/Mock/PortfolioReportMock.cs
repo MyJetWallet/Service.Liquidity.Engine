@@ -21,14 +21,11 @@ namespace Service.Liquidity.Engine.Tests.Mock
             return Task.CompletedTask;
         }
 
-        public Task ReportClosePosition(PositionPortfolio position)
-        {
-            ClosedPosition.Add(position);
-            return Task.CompletedTask;
-        }
-
         public Task ReportPositionUpdate(PositionPortfolio position)
         {
+            if (!position.IsOpen)
+                ClosedPosition.Add(position);
+
             return Task.CompletedTask;
         }
 

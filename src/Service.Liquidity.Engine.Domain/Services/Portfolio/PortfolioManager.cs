@@ -69,9 +69,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 activity?.AddTag("position-action", action);
                 activity?.AddTag("positionId", position.Id);
-                
 
-                var reminder = await ApplyInternalTradeToPosition(position, trade);
+                var reminder = (decimal) trade.Trade.BaseVolume;
+
+                reminder = await ApplyInternalTradeToPosition(position, trade, reminder);
 
                 toUpdate[position.Id] = position;
 
@@ -90,7 +91,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                     position = CreateNewPosition($"{baseId}-{index++}", trade);
 
-                    reminder = await ApplyInternalTradeToPosition(position, trade);
+                    reminder = await ApplyInternalTradeToPosition(position, trade, reminder);
 
                     toUpdate[position.Id] = position;
 
@@ -141,7 +142,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             {
                 activity?.AddTag("positionId", position.Id);
 
-                reminderVolume = await ApplyExternalTradeToPosition(trade, position);
+                reminderVolume = await ApplyExternalTradeToPosition(trade, position, reminderVolume);
 
                 toUpdate.Add(position);
 
@@ -167,7 +168,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 position = CreateNewPosition($"{id}", trade);
 
-                reminderVolume = await ApplyExternalTradeToPosition(trade, position);
+                reminderVolume = await ApplyExternalTradeToPosition(trade, position, reminderVolume);
 
                 toUpdate.Add(position);
 
@@ -197,18 +198,18 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
         }
 
-        private async Task<decimal> ApplyExternalTradeToPosition(ExchangeTrade trade, PositionPortfolio position)
+        private async Task<decimal> ApplyExternalTradeToPosition(ExchangeTrade trade, PositionPortfolio position, decimal applyVolume)
         {
-            var reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, (decimal) trade.Volume);
+            var reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, applyVolume);
 
             await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
 
             return reminderVolume;
         }
 
-        private async Task<decimal> ApplyInternalTradeToPosition(PositionPortfolio position, WalletTradeMessage trade)
+        private async Task<decimal> ApplyInternalTradeToPosition(PositionPortfolio position, WalletTradeMessage trade, decimal applyVolume)
         {
-            var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, (decimal)trade.Trade.BaseVolume);
+            var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, applyVolume);
 
             await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
 
