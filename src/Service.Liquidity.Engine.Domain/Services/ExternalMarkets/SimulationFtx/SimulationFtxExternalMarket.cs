@@ -19,6 +19,8 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
         private readonly ISpotInstrumentDictionaryClient _instrumentDictionaryClient;
         private readonly IAssetsDictionaryClient _assetsDictionaryClient;
 
+        private Dictionary<string, ExchangeMarketInfo> _marketInfoData = new Dictionary<string, ExchangeMarketInfo>();
+
         public SimulationFtxExternalMarket(ISimulationFtxTradingService service, ISpotInstrumentDictionaryClient instrumentDictionaryClient, IAssetsDictionaryClient assetsDictionaryClient)
         {
             _service = service;
@@ -47,56 +49,43 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
 
         public async Task<ExchangeMarketInfo> GetMarketInfo(string market)
         {
-            var data = await _service.GetMarketInfoAsync(new GetMarketInfoRequest()
+            if(_marketInfoData == null)
+                await LoadMarketInfo();
+
+            if (_marketInfoData.TryGetValue(market, out var resp))
+                return resp;
+
+            return null;
+        }
+
+        public async Task<List<ExchangeMarketInfo>> GetMarketInfoListAsync()
+        {
+            if (_marketInfoData == null)
+                await LoadMarketInfo();
+
+            return _marketInfoData.Values.ToList();
+        }
+
+        private async Task LoadMarketInfo()
+        {
+            var data = await _service.GetMarketInfoListAsync();
+
+            _marketInfoData = new Dictionary<string, ExchangeMarketInfo>();
+
+            foreach (var marketInfo in data.Info)
             {
-                Market = market
-            });
+                var resp = new ExchangeMarketInfo()
+                {
+                    Market = marketInfo.Market,
+                    MinVolume = marketInfo.MinVolume,
+                    PriceAccuracy = marketInfo.PriceAccuracy,
+                    BaseAsset = marketInfo.BaseAsset,
+                    QuoteAsset = marketInfo.QuoteAsset,
+                    VolumeAccuracy = marketInfo.BaseAccuracy
+                };
 
-            var instrument = _instrumentDictionaryClient.GetSpotInstrumentById(new SpotInstrumentIdentity()
-            {
-                BrokerId = "jetwallet",
-                Symbol = market.Replace("/", "")
-            });
-
-            if (instrument == null)
-                return null;
-
-            var baseAsset = _assetsDictionaryClient.GetAssetById(new AssetIdentity()
-            {
-                BrokerId = instrument.BrokerId,
-                Symbol = instrument.BaseAsset
-            });
-
-            if (baseAsset == null)
-                return null;
-
-            var quoteAsset = _assetsDictionaryClient.GetAssetById(new AssetIdentity()
-            {
-                BrokerId = instrument.BrokerId,
-                Symbol = instrument.QuoteAsset
-            });
-
-            if (quoteAsset == null)
-                return null;
-
-            var prm = market.Split("/");
-            if (prm.Length != 2)
-            {
-                return null;
+                _marketInfoData[resp.Market] = resp;
             }
-
-            var resp = new ExchangeMarketInfo()
-            {
-                Market = market,
-                MinVolume = (double)(instrument?.MinVolume ?? 0m),
-                PriceAccuracy = instrument.Accuracy,
-                BaseAsset = prm[0],
-                QuoteAsset = prm[1],
-                VolumeAccuracy = baseAsset.Accuracy,
-                OppositeVolumeAccuracy = quoteAsset.Accuracy,
-            };
-
-            return resp;
         }
 
         public async Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId)
@@ -130,7 +119,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
                 Volume = resp.Trade.Size,
                 Timestamp = resp.Trade.Timestamp,
                 Side = resp.Trade.Side == SimulationFtxOrderSide.Buy ? OrderSide.Buy : OrderSide.Sell,
-                OppositeVolume = Math.Round(resp.Trade.Price * resp.Trade.Size, marketInfo.OppositeVolumeAccuracy,  MidpointRounding.ToZero),
+                OppositeVolume = (double)((decimal)resp.Trade.Price * (decimal)resp.Trade.Size),
                 Source = GetName()
             };
 

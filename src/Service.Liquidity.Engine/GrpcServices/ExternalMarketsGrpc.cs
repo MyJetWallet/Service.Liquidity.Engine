@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.Grpc.Models;
@@ -35,6 +36,20 @@ namespace Service.Liquidity.Engine.GrpcServices
             var result = data.Select(e => new AssetBalanceDto(e.Key, e.Value)).ToList();
 
             return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(result));
+        }
+
+        public async Task<GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>> GetInstrumentsAsync(SourceDto request)
+        {
+            var market = _externalMarketManager.GetExternalMarketByName(request.Source);
+
+            if (market == null)
+            {
+                return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(new List<ExchangeMarketInfo>()));
+            }
+
+            var data = await market.GetMarketInfoListAsync();
+
+            return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(data));
         }
     }
 }

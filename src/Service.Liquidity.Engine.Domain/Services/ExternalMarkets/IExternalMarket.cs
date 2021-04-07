@@ -11,6 +11,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
         public Task<double> GetBalance(string asset);
         public Task<Dictionary<string, double>> GetBalances();
         public Task<ExchangeMarketInfo> GetMarketInfo(string market);
+        public Task<List<ExchangeMarketInfo>> GetMarketInfoListAsync();
 
         public Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId);
     }

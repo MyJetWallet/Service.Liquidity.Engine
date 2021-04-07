@@ -14,6 +14,8 @@ namespace Service.Liquidity.Engine.Client
             builder.RegisterInstance(factory.GetMarketMakerSettingsManagerGrpc()).As<IMarketMakerSettingsManagerGrpc>().SingleInstance();
             builder.RegisterInstance(factory.GetOrderBookManagerGrpc()).As<IOrderBookManagerGrpc>().SingleInstance();
             builder.RegisterInstance(factory.GetWalletPortfolioGrpc()).As<IWalletPortfolioGrpc>().SingleInstance();
+            builder.RegisterInstance(factory.GetHedgeSettingsManagerGrpc()).As<IHedgeSettingsManagerGrpc>().SingleInstance();
+            builder.RegisterInstance(factory.GetExternalMarketsGrpc()).As<IExternalMarketsGrpc>().SingleInstance();
         }
     }
 }

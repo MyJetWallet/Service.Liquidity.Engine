@@ -25,6 +25,7 @@ namespace Service.Liquidity.Engine.Client
         public IMarketMakerSettingsManagerGrpc GetMarketMakerSettingsManagerGrpc() => _channel.CreateGrpcService<IMarketMakerSettingsManagerGrpc>();
         public IOrderBookManagerGrpc GetOrderBookManagerGrpc() => _channel.CreateGrpcService<IOrderBookManagerGrpc>();
         public IWalletPortfolioGrpc GetWalletPortfolioGrpc() => _channel.CreateGrpcService<IWalletPortfolioGrpc>();
-        
+        public IHedgeSettingsManagerGrpc GetHedgeSettingsManagerGrpc() => _channel.CreateGrpcService<IHedgeSettingsManagerGrpc>();
+        public IExternalMarketsGrpc GetExternalMarketsGrpc() => _channel.CreateGrpcService<IExternalMarketsGrpc>();
     }
 }

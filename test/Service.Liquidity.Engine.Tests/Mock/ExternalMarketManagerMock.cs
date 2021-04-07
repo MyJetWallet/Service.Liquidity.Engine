@@ -65,6 +65,11 @@ namespace Service.Liquidity.Engine.Tests.Mock
             throw new System.NotImplementedException();
         }
 
+        public Task<List<ExchangeMarketInfo>> GetMarketInfoListAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId)
         {
             if (!Prices.TryGetValue(market, out var price))
