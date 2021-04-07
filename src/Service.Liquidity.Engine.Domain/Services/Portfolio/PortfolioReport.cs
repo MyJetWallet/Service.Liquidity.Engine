@@ -43,7 +43,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         {
             try
             {
-                //await _tradePublisher.PublishAsync(trade);
+                await _tradePublisher.PublishAsync(trade);
             }
             catch (Exception ex)
             {

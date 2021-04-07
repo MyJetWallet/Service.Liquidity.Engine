@@ -18,7 +18,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ServiceBus
 
         public async ValueTask PublishAsync(PositionPortfolio valueToPublish)
         {
-            await this._client.PublishAsync(PositionPortfolio.TopicName, valueToPublish.ServiceBusContractToByteArray(), true);
+            await this._client.PublishAsync(PositionPortfolio.TopicName, valueToPublish.ServiceBusContractToByteArray(), false);
         }
     }
 }

@@ -45,6 +45,7 @@ namespace Service.Liquidity.Engine.Modules
 
             builder
                 .RegisterType<InternalTradeReaderJob>()
+                .As<IStartable>()
                 .AutoActivate()
                 .SingleInstance();
 

@@ -23,6 +23,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         private Dictionary<string, Dictionary<string, PositionPortfolio>> _data = new();
         private readonly object _sync = new();
 
+        private readonly MyAsyncLock _processLock = new MyAsyncLock();
+
         public PortfolioManager(
             ILogger<PortfolioManager> logger,
             IPortfolioRepository repository, 
@@ -37,6 +39,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
         public async ValueTask RegisterLocalTradesAsync(List<WalletTradeMessage> trades)
         {
+            using var lockProcess = await _processLock.Lock();
+
             var toUpdate = new Dictionary<string, PositionPortfolio>();
 
             var baseId = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -67,7 +71,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
                 activity?.AddTag("positionId", position.Id);
                 
 
-                var reminder = await ApplyTradeToPosition(position, trade, true);
+                var reminder = await ApplyInternalTradeToPosition(position, trade);
 
                 toUpdate[position.Id] = position;
 
@@ -86,7 +90,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                     position = CreateNewPosition($"{baseId}-{index++}", trade);
 
-                    reminder = await ApplyTradeToPosition(position, trade, true);
+                    reminder = await ApplyInternalTradeToPosition(position, trade);
 
                     toUpdate[position.Id] = position;
 
@@ -116,38 +120,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
         }
 
-        private async Task<decimal> ApplyTradeToPosition(PositionPortfolio position, WalletTradeMessage trade, bool isInternal)
-        {
-            var reminder = position.ApplyTrade(trade.Trade.Side, (decimal) trade.Trade.Price, (decimal) trade.Trade.BaseVolume);
-
-            await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, isInternal));
-
-            return reminder;
-        }
-
-        private async Task UpdatePositionAndReport(PositionPortfolio position)
-        {
-            await _repository.Update(new List<PositionPortfolio>() { position });
-
-            lock (_sync)
-            {
-                if (position.IsOpen)
-                {
-                    if (!_data.ContainsKey(position.WalletId))
-                        _data[position.WalletId] = new Dictionary<string, PositionPortfolio>();
-                    _data[position.WalletId][position.Symbol] = position;
-                }
-                else
-                {
-                    _data[position.WalletId].Remove(position.Symbol);
-                }
-            }
-
-            await _portfolioReport.ReportPositionUpdate(position);
-        }
-
         public async Task RegisterHedgeTradeAsync(ExchangeTrade trade)
         {
+            using var lockProcess = await _processLock.Lock();
+
             using var activity = MyTelemetry.StartActivity("Process external trade")
                 ?.AddTag("eternal-source", trade.Source)
                 .AddTag("tradeId", trade.Id)
@@ -165,8 +141,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             {
                 activity?.AddTag("positionId", position.Id);
 
-                reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, (decimal) trade.Volume);
-                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
+                reminderVolume = await ApplyExternalTradeToPosition(trade, position);
 
                 toUpdate.Add(position);
 
@@ -192,8 +167,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
                 position = CreateNewPosition($"{id}", trade);
 
-                reminderVolume = position.ApplyTrade(trade.Side, (decimal)trade.Price, reminderVolume);
-                await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
+                reminderVolume = await ApplyExternalTradeToPosition(trade, position);
 
                 toUpdate.Add(position);
 
@@ -212,30 +186,54 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             }
 
             await _portfolioReport.ReportExternalTrade(CreateExternalTrade(trade));
-            await _portfolioReport.ReportPositionUpdate(position);
-
+            
             if (toUpdate.Any())
             {
-                using (var _ = MyTelemetry.StartActivity("Save position in repository")?.AddTag("position-count", toUpdate.Count))
+                using var _ = MyTelemetry.StartActivity("Save position updates")?.AddTag("position-count", toUpdate.Count);
+                foreach (var item in toUpdate)
                 {
-                    await _repository.Update(toUpdate.ToList());
-                }
-
-                lock (_sync)
-                {
-                    foreach (var pos in toUpdate.Where(e => !e.IsOpen))
-                    {
-                        _data[pos.WalletId].Remove(pos.Symbol);
-                    }
-
-                    foreach (var pos in toUpdate.Where(e => e.IsOpen))
-                    {
-                        if (!_data.ContainsKey(pos.WalletId))
-                            _data[pos.WalletId] = new Dictionary<string, PositionPortfolio>();
-                        _data[pos.WalletId][pos.Symbol] = pos;
-                    }
+                    await UpdatePositionAndReport(item);
                 }
             }
+        }
+
+        private async Task<decimal> ApplyExternalTradeToPosition(ExchangeTrade trade, PositionPortfolio position)
+        {
+            var reminderVolume = position.ApplyTrade(trade.Side, (decimal) trade.Price, (decimal) trade.Volume);
+
+            await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Id, trade.Source, false));
+
+            return reminderVolume;
+        }
+
+        private async Task<decimal> ApplyInternalTradeToPosition(PositionPortfolio position, WalletTradeMessage trade)
+        {
+            var reminder = position.ApplyTrade(trade.Trade.Side, (decimal)trade.Trade.Price, (decimal)trade.Trade.BaseVolume);
+
+            await _portfolioReport.ReportPositionAssociation(new PositionAssociation(position.Id, trade.Trade.TradeUId, trade.WalletId, true));
+
+            return reminder;
+        }
+
+        private async Task UpdatePositionAndReport(PositionPortfolio position)
+        {
+            await _repository.Update(new List<PositionPortfolio>() { position });
+
+            lock (_sync)
+            {
+                if (position.IsOpen)
+                {
+                    if (!_data.ContainsKey(position.WalletId))
+                        _data[position.WalletId] = new Dictionary<string, PositionPortfolio>();
+                    _data[position.WalletId][position.Symbol] = position;
+                }
+                else
+                {
+                    _data[position.WalletId].Remove(position.Symbol);
+                }
+            }
+
+            await _portfolioReport.ReportPositionUpdate(position);
         }
 
         private PortfolioTrade CreateLocalTrade(WalletTradeMessage trade)
@@ -256,12 +254,12 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
             return result;
         }
 
-        public Task<List<PositionPortfolio>> GetPortfolioAsync()
+        public async Task<List<PositionPortfolio>> GetPortfolioAsync()
         {
             lock (_sync)
             {
                 var result = _data.SelectMany(e => e.Value.Values).ToList();
-                return Task.FromResult(result);
+                return result;
             }
         }
 
@@ -320,6 +318,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 
         public void Start()
         {
+            using var lockProcess = _processLock.Lock().Result;
+
             var data = _repository.GetAll().GetAwaiter().GetResult();
 
 
