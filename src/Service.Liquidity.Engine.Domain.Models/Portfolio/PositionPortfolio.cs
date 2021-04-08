@@ -29,6 +29,10 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
         [DataMember(Order = 12)] public decimal QuoteAssetToUsdPrice { get; set; }
         [DataMember(Order = 13)] public decimal PLUsd { get; set; }
 
+        [DataMember(Order = 14)] public decimal TotalBaseVolume { get; set; }
+        [DataMember(Order = 15)] public decimal TotalQuoteVolume { get; set; }
+        [DataMember(Order = 15)] public decimal ResultPercentage { get; set; }
+
         public decimal ApplyTrade(OrderSide side, decimal price, decimal volume)
         {
             if ((side == OrderSide.Buy && volume < 0) || (side == OrderSide.Sell && volume > 0))
@@ -42,6 +46,10 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
                 BaseVolume += volume;
                 QuoteVolume += -1 * price * volume;
                 CloseTime = DateTime.UtcNow;
+
+                TotalBaseVolume += volume;
+                TotalQuoteVolume += -1 * price * volume;
+
                 return 0m;
             }
 
@@ -53,7 +61,13 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             QuoteVolume += quoteTradeVolume;
 
             if (BaseVolume == 0m)
+            {
                 IsOpen = false;
+                QuoteVolume = Math.Round(QuoteVolume, 6);
+                TotalBaseVolume = Math.Round(TotalBaseVolume, 6);
+                TotalQuoteVolume = Math.Round(TotalQuoteVolume, 6);
+                ResultPercentage = Math.Round(QuoteVolume / TotalQuoteVolume * 100, 2);
+            }
 
             CloseTime = DateTime.UtcNow;
 
