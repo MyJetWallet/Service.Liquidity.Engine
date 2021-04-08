@@ -20,5 +20,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
         [DataMember(Order = 7)] public double MaxSellSideVolume { get; set; }
 
         [DataMember(Order = 8)] public double MaxBuySideVolume { get; set; }
+
+        [DataMember(Order = 9)] public string WalletId { get; set; }
     }
 }
