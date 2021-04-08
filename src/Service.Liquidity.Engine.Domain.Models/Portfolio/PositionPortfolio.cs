@@ -66,7 +66,11 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
                 QuoteVolume = Math.Round(QuoteVolume, 6);
                 TotalBaseVolume = Math.Round(TotalBaseVolume, 6);
                 TotalQuoteVolume = Math.Round(TotalQuoteVolume, 6);
-                ResultPercentage = Math.Round(QuoteVolume / TotalQuoteVolume * 100, 2);
+
+                if (TotalQuoteVolume == 0)
+                    ResultPercentage = 0;
+                else
+                    ResultPercentage = Math.Round(QuoteVolume / TotalQuoteVolume * 100, 2);
             }
 
             CloseTime = DateTime.UtcNow;

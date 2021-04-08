@@ -90,7 +90,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Cannot handle {symbol} [{wallet}]. External order book is not found",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }
 
@@ -99,7 +99,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Cannot handle {symbol} [{wallet}]. Local wallet is not found",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }
 
@@ -113,7 +113,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Cannot handle {symbol} [{wallet}]. Spot instrument do not found",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }
 
@@ -122,7 +122,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Can not handle {symbol} [{wallet}]. Spot instrument do DISABLED",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    return;
                 }
 
                 var baseAsset = _assetsDictionary.GetAssetById(new AssetIdentity()
@@ -141,7 +142,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Cannot handle {symbol} [{wallet}]. Base asset do not found",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }
 
@@ -149,7 +150,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 {
                     _logger.LogError("Cannot handle {symbol} [{wallet}]. Quote asset do not found",
                         setting.InstrumentSymbol, setting.WalletName);
-                    activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }
 
@@ -307,7 +308,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 _logger.LogError(
                     "[{symbol}|{wallet}] Error from ME on Place MultiLimitOrder: {statusText}, {reasonText}",
                     setting.InstrumentSymbol, setting.WalletName, resp.Status.ToString(), resp.StatusReason);
-                activity.SetStatus(OpenTelemetry.Trace.Status.Error);
+                activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
             }
 
             var results = resp.Statuses.GroupBy(e => e.Status);
