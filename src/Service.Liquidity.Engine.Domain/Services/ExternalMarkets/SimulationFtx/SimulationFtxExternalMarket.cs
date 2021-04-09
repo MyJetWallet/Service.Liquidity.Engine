@@ -71,7 +71,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
         {
             var data = await _service.GetMarketInfoListAsync();
 
-            _marketInfoData = new Dictionary<string, ExchangeMarketInfo>();
+            var result = new Dictionary<string, ExchangeMarketInfo>();
 
             foreach (var marketInfo in data.Info)
             {
@@ -85,8 +85,10 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
                     VolumeAccuracy = marketInfo.BaseAccuracy
                 };
 
-                _marketInfoData[resp.Market] = resp;
+                result[resp.Market] = resp;
             }
+
+            _marketInfoData = result;
         }
 
         public async Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId)
