@@ -50,7 +50,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
 
         public async Task<ExchangeMarketInfo> GetMarketInfo(string market)
         {
-            if(_marketInfoData == null)
+            if(_marketInfoData!.Any() != true)
                 await LoadMarketInfo();
 
             if (_marketInfoData.TryGetValue(market, out var resp))
@@ -61,7 +61,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
 
         public async Task<List<ExchangeMarketInfo>> GetMarketInfoListAsync()
         {
-            if (_marketInfoData == null)
+            if (_marketInfoData!.Any() != true)
                 await LoadMarketInfo();
 
             return _marketInfoData.Values.ToList();
