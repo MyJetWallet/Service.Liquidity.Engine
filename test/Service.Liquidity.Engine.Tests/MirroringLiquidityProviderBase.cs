@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using NUnit.Framework;
 using Service.AssetsDictionary.Domain.Models;
 using Service.Balances.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
 using Service.Liquidity.Engine.Domain.Models.Settings;
 using Service.Liquidity.Engine.Domain.Models.Wallets;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;

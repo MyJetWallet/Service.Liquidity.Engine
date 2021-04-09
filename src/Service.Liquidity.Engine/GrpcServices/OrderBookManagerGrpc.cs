@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.Grpc.Models;
@@ -17,33 +17,39 @@ namespace Service.Liquidity.Engine.GrpcServices
             _orderBookManager = orderBookManager;
         }
 
-        public Task<GrpcResponseWithData<LeOrderBook>> GetOrderBookAsync(GetOrderBookRequest request)
+        public async Task<GrpcResponseWithData<LeOrderBook>> GetOrderBookAsync(GetOrderBookRequest request)
         {
-            return GrpcResponseWithData<LeOrderBook>.CreateTask(_orderBookManager.GetOrderBook(request.Symbol, request.Source));
+            var data = await _orderBookManager.GetOrderBook(request.Symbol, request.Source);
+
+            return GrpcResponseWithData<LeOrderBook>.Create(data);
         }
 
-        public Task<GrpcResponseWithData<Dictionary<string, GrpcList<string>>>> GetSourcesAndSymbolsAsync()
+        public async Task<GrpcResponseWithData<Dictionary<string, GrpcList<string>>>> GetSourcesAndSymbolsAsync()
         {
-            return GrpcResponseWithData<Dictionary<string, GrpcList<string>>>.CreateTask(
-                _orderBookManager.GetSourcesAndSymbols().ToDictionary(
-                    e => e.Key, 
-                    e => GrpcList<string>.Create(e.Value)
-                ));
+            var data = await _orderBookManager.GetSourcesAndSymbols();
+                var result = data.ToDictionary(
+                e => e.Key,
+                e => GrpcList<string>.Create(e.Value)
+            );
+            return GrpcResponseWithData<Dictionary<string, GrpcList<string>>>.Create(result);
         }
 
-        public Task<GrpcResponseWithData<GrpcList<string>>> GetSymbolsAsync(GetSymbolsRequest request)
+        public async Task<GrpcResponseWithData<GrpcList<string>>> GetSymbolsAsync(GetSymbolsRequest request)
         {
-            return GrpcResponseWithData<GrpcList<string>>.CreateTask(GrpcList<string>.Create(_orderBookManager.GetSymbols(request.Source)));
+            var data = await _orderBookManager.GetSymbols(request.Source);
+            return GrpcResponseWithData<GrpcList<string>>.Create(GrpcList<string>.Create(data));
         }
 
-        public Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesWithSymbolAsync(GetSourcesWithSymbolRequest request)
+        public async Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesWithSymbolAsync(GetSourcesWithSymbolRequest request)
         {
-            return GrpcResponseWithData<GrpcList<string>>.CreateTask(GrpcList<string>.Create(_orderBookManager.GetSourcesWithSymbol(request.Symbol)));
+            var data = await _orderBookManager.GetSourcesWithSymbol(request.Symbol);
+            return GrpcResponseWithData<GrpcList<string>>.Create(GrpcList<string>.Create(data));
         }
 
-        public Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync()
+        public async Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync()
         {
-            return GrpcResponseWithData<GrpcList<string>>.CreateTask(GrpcList<string>.Create(_orderBookManager.GetSources()));
+            var data = _orderBookManager.GetSources();
+            return GrpcResponseWithData<GrpcList<string>>.Create(GrpcList<string>.Create(data.Result));
         }
     }
 }

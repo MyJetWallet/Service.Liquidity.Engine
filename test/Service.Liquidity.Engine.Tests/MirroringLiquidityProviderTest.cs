@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using Service.Liquidity.Engine.Domain.Models;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
 using Service.Liquidity.Engine.Domain.Models.Settings;
 
 namespace Service.Liquidity.Engine.Tests

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.TradeHistory.ServiceBus;

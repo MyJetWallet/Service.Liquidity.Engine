@@ -104,7 +104,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                 return;
             }
 
-            activity?.AddTag("external-market", market.GetName());
+            activity?.AddTag("external-market", instrumentSettings.ExternalMarket);
 
             var hedgeSide = positionPortfolio.Side == OrderSide.Buy ? OrderSide.Sell : OrderSide.Buy;
             var hedgeVolume = (double)(-positionPortfolio.BaseVolume);

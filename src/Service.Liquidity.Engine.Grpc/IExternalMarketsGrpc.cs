@@ -1,6 +1,6 @@
 ﻿using System.ServiceModel;
 using System.Threading.Tasks;
-using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Grpc.Models;
 
 namespace Service.Liquidity.Engine.Grpc

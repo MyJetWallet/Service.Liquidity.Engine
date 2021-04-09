@@ -1,12 +1,9 @@
-﻿using System;
-using Autofac;
+﻿using Autofac;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
-using Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx;
 using Service.Liquidity.Engine.Domain.Services.Hedger;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Jobs;
-using Service.Simulation.FTX.Client;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -17,19 +14,9 @@ namespace Service.Liquidity.Engine.Modules
             builder
                 .RegisterType<ExternalMarketManager>()
                 .As<IExternalMarketManager>()
+                .As<IStartable>()
+                .AutoActivate()
                 .SingleInstance();
-
-
-            var ftxSimulation = Environment.GetEnvironmentVariable("SIMULATION_FTX");
-            if (!string.IsNullOrEmpty(ftxSimulation))
-            {
-                builder.RegisterSimulationFtxClient(ftxSimulation);
-
-                builder
-                    .RegisterType<SimulationFtxExternalMarket>()
-                    .As<IExternalMarket>()
-                    .SingleInstance();
-            }
 
             builder
                 .RegisterType<PortfolioMyNoSqlRepository>()

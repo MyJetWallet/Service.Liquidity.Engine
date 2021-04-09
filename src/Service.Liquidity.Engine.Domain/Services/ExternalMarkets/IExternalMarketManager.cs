@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MyJetWallet.Domain.ExternalMarketApi;
 
 namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
 {

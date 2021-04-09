@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Grpc.Models;
 
 namespace Service.Liquidity.Engine.Grpc

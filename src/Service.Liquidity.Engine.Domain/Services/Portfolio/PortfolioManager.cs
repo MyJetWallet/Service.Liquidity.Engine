@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.Assets;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
-using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 using Service.TradeHistory.ServiceBus;
 

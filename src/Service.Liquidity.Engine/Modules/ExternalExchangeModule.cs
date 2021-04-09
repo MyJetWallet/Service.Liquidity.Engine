@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Autofac;
-using Service.Liquidity.Engine.Domain.Models;
-using Service.Liquidity.Engine.Domain.Services.OrderBooks;
-using Service.Liquidity.Engine.Domain.Services.Wallets;
-using Service.Liquidity.Engine.ExchangeConnectors.Ftx;
+﻿using Autofac;
+using MyJetWallet.Domain.ExternalMarketApi;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -14,17 +9,7 @@ namespace Service.Liquidity.Engine.Modules
         {
             if (Program.Settings.FtxIsEnabled)
             {
-                List<string> ftxInstrumentList = Program.Settings.FtxInstrumentsOriginalSymbolToSymbol
-                    .Split(';')
-                    .ToList();
-
-                builder
-                    .RegisterType<FtxOrderBookSource>()
-                    .WithParameter("symbolList", ftxInstrumentList)
-                    .AsSelf()
-                    .As<IOrderBookSource>()
-                    .SingleInstance();
-                
+                builder.RegisterExternalMarketClient(Program.Settings.FtxExchangeGrpcUrl);
             }
         }
     }

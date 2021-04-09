@@ -84,7 +84,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             try
             {
 
-                var externalBook = _orderBookManager.GetOrderBook(setting.ExternalSymbol, setting.ExternalMarket);
+                var externalBook = await _orderBookManager.GetOrderBook(setting.ExternalSymbol, setting.ExternalMarket);
 
                 if (externalBook == null)
                 {

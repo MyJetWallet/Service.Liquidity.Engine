@@ -28,6 +28,8 @@ namespace Service.Liquidity.Engine.Modules
             builder
                 .RegisterType<OrderBookManager>()
                 .As<IOrderBookManager>()
+                .As<IStartable>()
+                .AutoActivate()
                 .SingleInstance();
 
             builder

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
@@ -7,7 +6,6 @@ using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Settings;
-using Service.Liquidity.Engine.ExchangeConnectors.Ftx;
 using Service.Liquidity.Engine.Jobs;
 
 namespace Service.Liquidity.Engine
@@ -17,7 +15,6 @@ namespace Service.Liquidity.Engine
         private readonly ILogger<ApplicationLifetimeManager> _logger;
         private readonly MyNoSqlTcpClient _myNoSqlClient;
         private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
-        private readonly FtxOrderBookSource _ftxOrderBookSource;
         private readonly MarketMakerJob _marketMakerJob;
         private readonly HedgeSettingsManager _hedgeSettingsManager;
         private readonly MarketMakerSettingsManager _marketMakerSettingsManager;
@@ -28,7 +25,6 @@ namespace Service.Liquidity.Engine
             ILogger<ApplicationLifetimeManager> logger,
             MyNoSqlTcpClient myNoSqlClient,
             MyServiceBusTcpClient myServiceBusTcpClient,
-            FtxOrderBookSource ftxOrderBookSource,
             MarketMakerJob marketMakerJob,
             HedgeSettingsManager hedgeSettingsManager,
             MarketMakerSettingsManager marketMakerSettingsManager,
@@ -38,7 +34,6 @@ namespace Service.Liquidity.Engine
             _logger = logger;
             _myNoSqlClient = myNoSqlClient;
             _myServiceBusTcpClient = myServiceBusTcpClient;
-            _ftxOrderBookSource = ftxOrderBookSource;
             _marketMakerJob = marketMakerJob;
             _hedgeSettingsManager = hedgeSettingsManager;
             _marketMakerSettingsManager = marketMakerSettingsManager;
@@ -55,7 +50,6 @@ namespace Service.Liquidity.Engine
 
             _myNoSqlClient.Start();
             _myServiceBusTcpClient.Start();
-            _ftxOrderBookSource.Start();
 
 
             _marketMakerJob.Start();
@@ -76,9 +70,6 @@ namespace Service.Liquidity.Engine
             {
                 Console.WriteLine($"Exception on MyServiceBusTcpClient.Stop: {ex}");
             }
-
-            
-            _ftxOrderBookSource.Stop();
         }
 
         protected override void OnStopped()

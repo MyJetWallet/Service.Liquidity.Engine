@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using MyJetWallet.Domain.ExternalMarketApi;
+using MyJetWallet.Domain.ExternalMarketApi.Dto;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
-using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 
 namespace Service.Liquidity.Engine.Tests.Mock
@@ -45,27 +47,23 @@ namespace Service.Liquidity.Engine.Tests.Mock
             Name = name;
         }
 
-        public string GetName()
+
+        public Task<GetNameResult> GetNameAsync()
         {
-            return Name;
+            return Task.FromResult(new GetNameResult() {Name = Name});
         }
 
-        public Task<double> GetBalance(string asset)
+        public Task<GetBalancesResponse> GetBalancesAsync()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public Task<Dictionary<string, double>> GetBalances()
+        public Task<GetMarketInfoResponse> GetMarketInfoAsync(MarketRequest request)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        public Task<ExchangeMarketInfo> GetMarketInfo(string market)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<List<ExchangeMarketInfo>> GetMarketInfoListAsync()
+        public Task<GetMarketInfoListResponse> GetMarketInfoListAsync()
         {
             throw new NotImplementedException();
         }

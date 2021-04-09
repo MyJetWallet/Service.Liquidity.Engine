@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.Grpc.Models;
@@ -31,9 +31,9 @@ namespace Service.Liquidity.Engine.GrpcServices
             if (market == null)
                 return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(new List<AssetBalanceDto>()));
 
-            var data = await market.GetBalances();
+            var data = await market.GetBalancesAsync();
 
-            var result = data.Select(e => new AssetBalanceDto(e.Key, e.Value)).ToList();
+            var result = data.Balances.Select(e => new AssetBalanceDto(e.Key, e.Value)).ToList();
 
             return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(result));
         }
@@ -49,7 +49,7 @@ namespace Service.Liquidity.Engine.GrpcServices
 
             var data = await market.GetMarketInfoListAsync();
 
-            return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(data));
+            return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(data.Infos));
         }
     }
 }

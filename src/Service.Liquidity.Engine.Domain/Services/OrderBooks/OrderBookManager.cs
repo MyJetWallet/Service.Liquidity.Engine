@@ -1,63 +1,119 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
+using System.Threading.Tasks;
+using Autofac;
+using Microsoft.Extensions.Logging;
+using MyJetWallet.Domain.ExternalMarketApi;
+using MyJetWallet.Domain.ExternalMarketApi.Dto;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
+using Newtonsoft.Json;
 
 namespace Service.Liquidity.Engine.Domain.Services.OrderBooks
 {
-    public class OrderBookManager : IOrderBookManager
+    public class OrderBookManager : IOrderBookManager, IStartable
     {
-        private readonly Dictionary<string, IOrderBookSource> _orderBookSources;
+        private readonly Dictionary<string, IOrderBookSource> _orderBookSources = new();
 
-        public OrderBookManager(IOrderBookSource[] orderBookSources)
+        private IOrderBookSource[] _sources;
+        private readonly ILogger<OrderBookManager> _logger;
+        private bool _isAllLoaded = false;
+
+        public OrderBookManager(IOrderBookSource[] orderBookSources, ILogger<OrderBookManager> logger)
         {
-            _orderBookSources = orderBookSources.ToDictionary(e => e.GetName());
+            _sources = orderBookSources;
+            _logger = logger;
+            //_orderBookSources = orderBookSources.ToDictionary(e => e.GetName());
         }
 
-        public LeOrderBook GetOrderBook(string symbol, string source)
+        public void Start()
+        {
+            _isAllLoaded = true;
+            _orderBookSources.Clear();
+
+            foreach (var source in _sources)
+            {
+                try
+                {
+                    var name = source.GetNameAsync().GetAwaiter().GetResult();
+                    if (!string.IsNullOrEmpty(name?.Name))
+                    {
+                        _orderBookSources[name.Name] = source;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _isAllLoaded = false;
+                    _logger.LogError(ex, "Cannot load one of IOrderBookSource");
+                }
+            }
+
+            _logger.LogInformation($"Load IOrderBookSource is finished: {JsonConvert.SerializeObject(_orderBookSources.Keys.ToArray())}");
+        }
+
+        public async Task<LeOrderBook> GetOrderBook(string symbol, string source)
         {
             if (!_orderBookSources.TryGetValue(source, out var bookSource))
             {
+                if (!_isAllLoaded)
+                {
+                    Start();
+                    if (!_orderBookSources.TryGetValue(source, out bookSource))
+                        return null;
+                }
+
                 return null;
             }
 
-            return bookSource.GetOrderBook(symbol);
+            var resp = await bookSource.GetOrderBookAsync(new MarketRequest(){Market = symbol });
+
+            return resp?.OrderBook;
         }
 
-        public Dictionary<string, List<string>> GetSourcesAndSymbols()
+        public async Task<Dictionary<string, List<string>>> GetSourcesAndSymbols()
         {
             var result = new Dictionary<string, List<string>>();
-            foreach (var source in _orderBookSources.Values)
+            foreach (var source in _orderBookSources)
             {
-                result[source.GetName()] = source.GetSymbols();
+                var data = await source.Value.GetSymbolsAsync();
+                if (data?.Symbols != null)
+                {
+                    result[source.Key] = data.Symbols;
+                }
             }
 
             return result;
         }
 
-        public List<string> GetSymbols(string source)
+        public async Task<List<string>> GetSymbols(string source)
         {
             if (!_orderBookSources.TryGetValue(source, out var bookSource))
             {
                 return new List<string>();
             }
 
-            return bookSource.GetSymbols();
+            var resp =  await bookSource.GetSymbolsAsync();
+
+            return resp?.Symbols ?? new List<string>();
         }
 
-        public List<string> GetSourcesWithSymbol(string symbol)
+        public async Task<List<string>> GetSourcesWithSymbol(string symbol)
         {
             var result = new List<string>();
-            foreach (var source in _orderBookSources.Values.Where(e => e.HasSymbol(symbol)))
+
+            var data = await GetSourcesAndSymbols();
+
+            foreach (var source in data.Where(e => e.Value.Contains(symbol)))
             {
-                result.Add(source.GetName());
+                result.Add(source.Key);
             }
 
             return result;
         }
 
-        public List<string> GetSources()
+        public Task<List<string>> GetSources()
         {
-            return _orderBookSources.Keys.ToList();
+            return Task.FromResult(_orderBookSources.Keys.ToList());
         }
     }
 }

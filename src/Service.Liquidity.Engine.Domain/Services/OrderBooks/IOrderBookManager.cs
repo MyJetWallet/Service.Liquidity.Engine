@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
-using MyJetWallet.Domain.Prices;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
+using System.Threading.Tasks;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 
 namespace Service.Liquidity.Engine.Domain.Services.OrderBooks
 {
     public interface IOrderBookManager
     {
-        LeOrderBook GetOrderBook(string symbol, string source);
+        Task<LeOrderBook> GetOrderBook(string symbol, string source);
 
-        Dictionary<string, List<string>> GetSourcesAndSymbols();
+        Task<Dictionary<string, List<string>>> GetSourcesAndSymbols();
 
-        List<string> GetSymbols(string source);
+        Task<List<string>> GetSymbols(string source);
 
-        List<string> GetSourcesWithSymbol(string symbol);
+        Task<List<string>> GetSourcesWithSymbol(string symbol);
 
-        List<string> GetSources();
+        Task<List<string>> GetSources();
     }
 }

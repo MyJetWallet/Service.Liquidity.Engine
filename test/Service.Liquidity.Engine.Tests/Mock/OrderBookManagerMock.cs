@@ -1,36 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using Service.Liquidity.Engine.Domain.Models.OrderBooks;
+using System.Threading.Tasks;
+using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 
-namespace Service.Liquidity.Engine.Tests
+namespace Service.Liquidity.Engine.Tests.Mock
 {
     public class OrderBookManagerMock: IOrderBookManager
     {
         public Dictionary<(string, string), LeOrderBook> Data { get; set; } = new();
 
-        public LeOrderBook GetOrderBook(string symbol, string source)
+        public Task<LeOrderBook> GetOrderBook(string symbol, string source)
         {
             Data.TryGetValue((symbol, source), out var book);
-            return book;
+            return Task.FromResult(book);
         }
 
-        public Dictionary<string, List<string>> GetSourcesAndSymbols()
+        public Task<Dictionary<string, List<string>>> GetSourcesAndSymbols()
         {
             throw new NotImplementedException();
         }
 
-        public List<string> GetSymbols(string source)
+        public Task<List<string>> GetSymbols(string source)
         {
             throw new NotImplementedException();
         }
 
-        public List<string> GetSourcesWithSymbol(string symbol)
+        public Task<List<string>> GetSourcesWithSymbol(string symbol)
         {
             throw new NotImplementedException();
         }
 
-        public List<string> GetSources()
+        public Task<List<string>> GetSources()
         {
             throw new NotImplementedException();
         }
