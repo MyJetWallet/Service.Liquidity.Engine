@@ -70,7 +70,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
                 if (TotalQuoteVolume == 0)
                     ResultPercentage = 0;
                 else
-                    ResultPercentage = Math.Round(QuoteVolume / TotalQuoteVolume * 100, 2);
+                    ResultPercentage = Math.Round(QuoteVolume / Math.Abs(TotalQuoteVolume) * 100, 2);
             }
 
             CloseTime = DateTime.UtcNow;

@@ -308,5 +308,114 @@ namespace Service.Liquidity.Engine.Tests
                 QuoteVolume = -11000
             });
         }
+
+
+        [Test]
+        public async Task ExternalTrade_FullHedge_Buy()
+        {
+            _manager.Start();
+
+            var trades = new List<WalletTradeMessage>(){
+                new WalletTradeMessage()
+                {
+                    BrokerId = "broker",
+                    WalletId = "TEST",
+                    ClientId = "client",
+                    Trade = new WalletTrade("1", "BTCUSD", 10000, 2, -20000, "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 3),
+                }
+            };
+
+            var trade2 = new ExchangeTrade()
+            {
+                Id = "11",
+                Price = 11000,
+                Volume = -2,
+                Side = OrderSide.Sell,
+                Market = "BTC/USD",
+                OppositeVolume = 22000,
+                Timestamp = DateTime.UtcNow,
+                ReferenceId = "1",
+
+                Source = "FTX",
+                AssociateSymbol = "BTCUSD",
+                AssociateBrokerId = "broker",
+                AssociateWalletId = "TEST"
+            };
+
+            await _manager.RegisterLocalTradesAsync(trades);
+
+            await _manager.RegisterHedgeTradeAsync(trade2);
+
+            _repository.Data.Should().BeEmpty();
+            _portfolioReport.ClosedPosition.Should().HaveCount(1);
+
+            var position = _portfolioReport.ClosedPosition.First();
+
+            position.Should().BeEquivalentTo(new
+            {
+                IsOpen = false,
+                Side = OrderSide.Buy,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 0,
+                QuoteVolume = 2000,
+                ResultPercentage = 10
+            });
+
+        }
+
+        [Test]
+        public async Task ExternalTrade_FullHedge_Sell()
+        {
+            _manager.Start();
+
+            var trades = new List<WalletTradeMessage>(){
+                new WalletTradeMessage()
+                {
+                    BrokerId = "broker",
+                    WalletId = "TEST",
+                    ClientId = "client",
+                    Trade = new WalletTrade("1", "BTCUSD", 10000, -2, 20000, "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Sell, 3),
+                }
+            };
+
+            var trade2 = new ExchangeTrade()
+            {
+                Id = "11",
+                Price = 11000,
+                Volume = 2,
+                Side = OrderSide.Buy,
+                Market = "BTC/USD",
+                OppositeVolume = -22000,
+                Timestamp = DateTime.UtcNow,
+                ReferenceId = "1",
+
+                Source = "FTX",
+                AssociateSymbol = "BTCUSD",
+                AssociateBrokerId = "broker",
+                AssociateWalletId = "TEST"
+            };
+
+            await _manager.RegisterLocalTradesAsync(trades);
+
+            await _manager.RegisterHedgeTradeAsync(trade2);
+
+            _repository.Data.Should().BeEmpty();
+            _portfolioReport.ClosedPosition.Should().HaveCount(1);
+
+            var position = _portfolioReport.ClosedPosition.First();
+
+            position.Should().BeEquivalentTo(new
+            {
+                IsOpen = false,
+                Side = OrderSide.Sell,
+                BaseAsset = "BTC",
+                QuotesAsset = "USD",
+                BaseVolume = 0,
+                QuoteVolume = -2000,
+                ResultPercentage = -10
+            });
+
+        }
     }
 }
