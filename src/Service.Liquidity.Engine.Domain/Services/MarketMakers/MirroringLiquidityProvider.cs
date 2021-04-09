@@ -88,8 +88,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
                 if (externalBook == null)
                 {
-                    _logger.LogError("Cannot handle {symbol} [{wallet}]. External order book is not found",
-                        setting.InstrumentSymbol, setting.WalletName);
+                    _logger.LogError("Cannot handle {symbol} [{wallet}]. External order book is not found ({externalMarket} - {externalSymbol})",
+                        setting.InstrumentSymbol, setting.WalletName, setting.ExternalMarket, setting.ExternalSymbol);
                     activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
                     return;
                 }

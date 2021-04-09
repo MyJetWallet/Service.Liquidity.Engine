@@ -68,24 +68,24 @@ namespace Service.Liquidity.Engine.Tests.Mock
             throw new NotImplementedException();
         }
 
-        public Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId)
+        public Task<ExchangeTrade> MarketTrade(MarketTradeRequest request)
         {
-            if (!Prices.TryGetValue(market, out var price))
-                throw new Exception($"Cannot found MOCK price for {market}");
+            if (!Prices.TryGetValue(request.Market, out var price))
+                throw new Exception($"Cannot found MOCK price for {request.Market}");
 
 
-            var oppVol = double.Parse(((decimal) price * (decimal) volume * -1m).ToString(CultureInfo.InvariantCulture));
+            var oppVol = double.Parse(((decimal) price * (decimal)request.Volume * -1m).ToString(CultureInfo.InvariantCulture));
 
             var trade = new ExchangeTrade()
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Price = price,
-                Side = side,
-                Volume = volume,
-                Market = market,
+                Side = request.Side,
+                Volume = request.Volume,
+                Market = request.Market,
                 OppositeVolume = oppVol,
                 Timestamp = DateTime.UtcNow,
-                ReferenceId = referenceId,
+                ReferenceId = request.ReferenceId,
                 Source = Name,
             };
 

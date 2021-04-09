@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Domain.ExternalMarketApi;
 using MyJetWallet.Domain.Orders;
 using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
@@ -116,7 +117,13 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
             {
                 new { instrumentSettings.ExternalMarket, instrumentSettings.ExternalSymbol, hedgeSide, hedgeVolume, hedgeReferenceId }.AddToActivityAsJsonTag("external-trade-request");
 
-                var trade = await market.MarketTrade(instrumentSettings.ExternalSymbol, hedgeSide, hedgeVolume, hedgeReferenceId);
+                var trade = await market.MarketTrade(new MarketTradeRequest()
+                {
+                    Side = hedgeSide,
+                    Volume = hedgeVolume,
+                    Market = instrumentSettings.ExternalSymbol,
+                    ReferenceId = hedgeReferenceId
+                });
 
                 trade.AssociateSymbol = positionPortfolio.Symbol;
                 trade.AssociateBrokerId = wallet.BrokerId;
