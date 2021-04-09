@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualBasic;
 using MyJetWallet.Domain.Assets;
 using MyJetWallet.Domain.Orders;
+using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using Service.AssetsDictionary.Client;
 using Service.Liquidity.Engine.Domain.Models.ExternalMarkets;
@@ -98,10 +99,12 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
                 Size = volume
             };
 
+            
+
             var marketInfo = await GetMarketInfo(market);
             if (marketInfo == null)
             {
-                throw new Exception("Cannot execute trade, market info do not found. Request: {JsonConvert.SerializeObject(request)}");
+                throw new Exception($"Cannot execute trade, market info do not found. Request: {JsonConvert.SerializeObject(request)}");
             }
 
             var resp = await _service.ExecuteMarketOrderAsync(request);

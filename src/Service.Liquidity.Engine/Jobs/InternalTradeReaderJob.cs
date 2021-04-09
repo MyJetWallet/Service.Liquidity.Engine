@@ -28,6 +28,8 @@ namespace Service.Liquidity.Engine.Jobs
         private readonly object _sync = new object();
         private bool _needToHedge = false;
 
+        private int _countInterval = 100;
+
         public InternalTradeReaderJob(
             ILogger<InternalTradeReaderJob> logger,
             ISubscriber<IReadOnlyList<WalletTradeMessage>> subscriber, 
@@ -49,12 +51,15 @@ namespace Service.Liquidity.Engine.Jobs
         {
             _hedgeTimer.ChangeInterval(TimeSpan.FromMilliseconds(_hedgeSettings.GetGlobalHedgeSettings().HedgeTimerIntervalMSec));
 
+            _countInterval++;
+
             lock (_sync)
             {
-                if (!_needToHedge)
+                if (!_needToHedge && _countInterval < 10)
                     return;
 
                 _needToHedge = false;
+                _countInterval = 0;
             }
 
             await _hedgeService.HedgePortfolioAsync();

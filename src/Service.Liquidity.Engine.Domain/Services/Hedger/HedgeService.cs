@@ -114,12 +114,16 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
             try
             {
+                new { instrumentSettings.ExternalMarket, instrumentSettings.ExternalSymbol, hedgeSide, hedgeVolume, hedgeReferenceId }.AddToActivityAsJsonTag("external-trade-request");
+
                 var trade = await market.MarketTrade(instrumentSettings.ExternalSymbol, hedgeSide, hedgeVolume, hedgeReferenceId);
 
                 trade.AssociateSymbol = positionPortfolio.Symbol;
                 trade.AssociateBrokerId = wallet.BrokerId;
                 trade.AssociateClientId = wallet.ClientId;
                 trade.AssociateWalletId = wallet.WalletId;
+
+                trade.AddToActivityAsJsonTag("external-trade-result");
 
                 _logger.LogInformation("Executed hedge trade. PositionId {positionId}. Trade: {tradeJson}", 
                     positionPortfolio.Id,
@@ -129,6 +133,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
 
                 await _portfolioManager.RegisterHedgeTradeAsync(trade);
+
+                activity?.AddTag("hedge-result", "success");
 
             }
             catch(Exception ex)
