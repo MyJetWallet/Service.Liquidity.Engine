@@ -31,7 +31,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
 
         [DataMember(Order = 14)] public decimal TotalBaseVolume { get; set; }
         [DataMember(Order = 15)] public decimal TotalQuoteVolume { get; set; }
-        [DataMember(Order = 15)] public decimal ResultPercentage { get; set; }
+        [DataMember(Order = 16)] public decimal ResultPercentage { get; set; }
 
         public decimal ApplyTrade(OrderSide side, decimal price, decimal volume)
         {
