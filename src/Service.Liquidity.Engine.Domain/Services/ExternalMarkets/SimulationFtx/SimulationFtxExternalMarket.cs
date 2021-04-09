@@ -69,26 +69,35 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets.SimulationFtx
 
         private async Task LoadMarketInfo()
         {
-            var data = await _service.GetMarketInfoListAsync();
-
-            var result = new Dictionary<string, ExchangeMarketInfo>();
-
-            foreach (var marketInfo in data.Info)
+            using var activity = MyTelemetry.StartActivity("Load market info");
+            try
             {
-                var resp = new ExchangeMarketInfo()
+                var data = await _service.GetMarketInfoListAsync();
+
+                var result = new Dictionary<string, ExchangeMarketInfo>();
+
+                foreach (var marketInfo in data.Info)
                 {
-                    Market = marketInfo.Market,
-                    MinVolume = marketInfo.MinVolume,
-                    PriceAccuracy = marketInfo.PriceAccuracy,
-                    BaseAsset = marketInfo.BaseAsset,
-                    QuoteAsset = marketInfo.QuoteAsset,
-                    VolumeAccuracy = marketInfo.BaseAccuracy
-                };
+                    var resp = new ExchangeMarketInfo()
+                    {
+                        Market = marketInfo.Market,
+                        MinVolume = marketInfo.MinVolume,
+                        PriceAccuracy = marketInfo.PriceAccuracy,
+                        BaseAsset = marketInfo.BaseAsset,
+                        QuoteAsset = marketInfo.QuoteAsset,
+                        VolumeAccuracy = marketInfo.BaseAccuracy
+                    };
 
-                result[resp.Market] = resp;
+                    result[resp.Market] = resp;
+                }
+
+                _marketInfoData = result;
             }
-
-            _marketInfoData = result;
+            catch (Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
         }
 
         public async Task<ExchangeTrade> MarketTrade(string market, OrderSide side, double volume, string referenceId)
