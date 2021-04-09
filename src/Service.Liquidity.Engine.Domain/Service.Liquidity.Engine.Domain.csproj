@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MyJetWallet.Domain" Version="1.0.23" />
+    <PackageReference Include="MyJetWallet.Domain" Version="1.0.30" />
     <PackageReference Include="MyJetWallet.Domain.ServiceBus" Version="1.2.0" />
-    <PackageReference Include="MyJetWallet.MatchingEngine.Grpc" Version="1.1.1" />
+    <PackageReference Include="MyJetWallet.MatchingEngine.Grpc" Version="1.1.2" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.2.4" />
     <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="1.0.5" />
     <PackageReference Include="MyJetWallet.Service.Simulation.FTX.Client" Version="1.1.0" />
