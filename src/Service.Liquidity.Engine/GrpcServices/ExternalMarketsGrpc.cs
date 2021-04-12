@@ -33,7 +33,7 @@ namespace Service.Liquidity.Engine.GrpcServices
 
             var data = await market.GetBalancesAsync();
 
-            var result = data.Balances.Select(e => new AssetBalanceDto(e.Key, e.Value)).ToList();
+            var result = data.Balances.Select(e => new AssetBalanceDto(e.Symbol, (double)e.Balance, (double)e.Free)).ToList();
 
             return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(result));
         }
