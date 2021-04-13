@@ -15,7 +15,10 @@ namespace Service.Liquidity.Engine.Grpc
         Task UpdateMarketMakerSettingsAsync(MarketMakerSettings request);
 
         [OperationContract]
-        Task AddOrUpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
+        Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
+
+        [OperationContract]
+        Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
 
         [OperationContract]
         Task RemoveMirroringLiquiditySettingsAsync(RemoveMirroringLiquiditySettingsRequest request);

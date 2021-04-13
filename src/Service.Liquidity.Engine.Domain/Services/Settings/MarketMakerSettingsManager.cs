@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using Newtonsoft.Json;
 using Service.Liquidity.Engine.Domain.Models.Settings;
@@ -46,31 +48,104 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             _logger.LogInformation("Market Maker mode was changed to {modeText}", mode.ToString());
         }
 
-        public async Task AddOrUpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
+        public async Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
         {
-            await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(SettingsMirroringLiquidityNoSql.Create(setting));
+            using var action = MyTelemetry.StartActivity("Add Mirroring Liquidity Provider");
+            setting.AddToActivityAsJsonTag("settings");
 
-            await ReloadSettings();
+            try
+            {
+                var entity = SettingsMirroringLiquidityNoSql.Create(setting);
 
-            _logger.LogInformation("Updated MirroringLiquidity Settings: {jsonText}", JsonConvert.SerializeObject(setting));
+                var exist = await _mirrorLiquidityDataWriter.GetAsync(entity.PartitionKey, entity.RowKey);
+
+                if (exist != null)
+                {
+                    _logger.LogError(
+                        "Cannot add new Mirroring Liquidity Provider, because already exist provider for symbol\\wallet. Request: {jsonText}",
+                        JsonConvert.SerializeObject(setting));
+                    throw new Exception(
+                        "Cannot add new Mirroring Liquidity Provider, because already exist provider for symbol\\wallet");
+                }
+
+                await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(entity);
+
+                _logger.LogInformation("Added MirroringLiquidity Settings: {jsonText}",
+                    JsonConvert.SerializeObject(setting));
+            }
+            catch (Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
+        }
+
+
+        public async Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
+        {
+            using var action = MyTelemetry.StartActivity("Update Mirroring Liquidity Provider");
+            setting.AddToActivityAsJsonTag("settings");
+
+            try
+            {
+                await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(SettingsMirroringLiquidityNoSql.Create(setting));
+
+                await ReloadSettings();
+
+                _logger.LogInformation("Updated MirroringLiquidity Settings: {jsonText}",
+                    JsonConvert.SerializeObject(setting));
+            }
+            catch(Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
         }
 
         public async Task RemoveMirroringLiquiditySettingsAsync(string symbol, string walletName)
         {
-            await _mirrorLiquidityDataWriter.DeleteAsync(SettingsMirroringLiquidityNoSql.GeneratePartitionKey(), SettingsMirroringLiquidityNoSql.GenerateRowKey(symbol, walletName));
+            using var action = MyTelemetry.StartActivity("Update Mirroring Liquidity Provider");
+            new {symbol, walletName}.AddToActivityAsJsonTag("settings");
 
-            await ReloadSettings();
-            
-            _logger.LogInformation("Removed MirroringLiquidity Settings: {symbol}, {walletName}", symbol, walletName);
+            try
+            {
+                var entity = await _mirrorLiquidityDataWriter.DeleteAsync(SettingsMirroringLiquidityNoSql.GeneratePartitionKey(),
+                    SettingsMirroringLiquidityNoSql.GenerateRowKey(symbol, walletName));
+
+                if (entity != null)
+                    _logger.LogInformation("Removed MirroringLiquidity: {jsonText}", JsonConvert.SerializeObject(entity.Settings));
+
+                await ReloadSettings();
+
+                _logger.LogInformation("Removed MirroringLiquidity Settings: {symbol}, {walletName}", symbol,
+                    walletName);
+            }
+            catch(Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
         }
 
         public async Task UpdateMarketMakerSettingsAsync(MarketMakerSettings settings)
         {
-            var entity = SettingsMarketMakerNoSql.Create(settings);
-            await _marketMakerDataWriter.InsertOrReplaceAsync(entity);
-            await ReloadSettings();
+            using var action = MyTelemetry.StartActivity("Update MarketMaker Settings");
+            settings.AddToActivityAsJsonTag("settings");
 
-            _logger.LogInformation("Updated market maker settings: {jsonText}", JsonConvert.SerializeObject(settings));
+            try
+            {
+                var entity = SettingsMarketMakerNoSql.Create(settings);
+                await _marketMakerDataWriter.InsertOrReplaceAsync(entity);
+                await ReloadSettings();
+
+                _logger.LogInformation("Updated market maker settings: {jsonText}",
+                    JsonConvert.SerializeObject(settings));
+            }
+            catch(Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
         }
 
         public MarketMakerSettings GetMarketMakerSettings()

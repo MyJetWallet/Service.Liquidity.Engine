@@ -27,9 +27,14 @@ namespace Service.Liquidity.Engine.GrpcServices
             return _manager.UpdateMarketMakerSettingsAsync(request);
         }
 
-        public Task AddOrUpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
+        public Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
         {
-            return _manager.AddOrUpdateMirroringLiquiditySettingsAsync(setting);
+            return _manager.AddMirroringLiquiditySettingsAsync(setting);
+        }
+
+        public Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
+        {
+            return _manager.UpdateMirroringLiquiditySettingsAsync(setting);
         }
 
         public Task RemoveMirroringLiquiditySettingsAsync(RemoveMirroringLiquiditySettingsRequest request)
