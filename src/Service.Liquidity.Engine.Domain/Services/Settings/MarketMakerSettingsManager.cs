@@ -70,6 +70,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
 
                 await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(entity);
 
+                await ReloadSettings();
+
                 _logger.LogInformation("Added MirroringLiquidity Settings: {jsonText}",
                     JsonConvert.SerializeObject(setting));
             }
