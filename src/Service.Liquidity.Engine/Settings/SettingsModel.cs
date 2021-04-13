@@ -1,4 +1,5 @@
-﻿using SimpleTrading.SettingsReader;
+﻿using System.Collections.Generic;
+using SimpleTrading.SettingsReader;
 
 namespace Service.Liquidity.Engine.Settings
 {
@@ -8,10 +9,16 @@ namespace Service.Liquidity.Engine.Settings
         [YamlProperty("LiquidityEngine.SeqServiceUrl")]
         public string SeqServiceUrl { get; set; }
 
+        [YamlProperty("LiquidityEngine.ExternalExchange.FTXSimulation.IsEnabled")]
+        public bool FtxSimulateIsEnabled { get; set; }
+
+        [YamlProperty("LiquidityEngine.ExternalExchange.FTXSimulation.ExchangeGrpcUrl")]
+        public string FtxSimulateExchangeGrpcUrl { get; set; }
+
         [YamlProperty("LiquidityEngine.ExternalExchange.FTX.IsEnabled")]
         public bool FtxIsEnabled { get; set; }
 
-        [YamlProperty("LiquidityEngine.ExternalExchange.FTX.FtxExchangeGrpcUrl")]
+        [YamlProperty("LiquidityEngine.ExternalExchange.FTX.ExchangeGrpcUrl")]
         public string FtxExchangeGrpcUrl { get; set; }
 
         [YamlProperty("LiquidityEngine.BalancesGrpcServiceUrl")]
@@ -37,5 +44,8 @@ namespace Service.Liquidity.Engine.Settings
 
         [YamlProperty("LiquidityEngine.ZipkinUrl")]
         public string ZipkinUrl { get; set; }
+
+
     }
+
 }

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -32,6 +33,7 @@ namespace Service.Liquidity.Engine
             services.AddHostedService<ApplicationLifetimeManager>();
 
             services.AddMyTelemetry(Program.Settings.ZipkinUrl);
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

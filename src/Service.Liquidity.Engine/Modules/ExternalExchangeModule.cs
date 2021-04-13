@@ -7,6 +7,11 @@ namespace Service.Liquidity.Engine.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
+            if (Program.Settings.FtxSimulateIsEnabled)
+            {
+                builder.RegisterExternalMarketClient(Program.Settings.FtxSimulateExchangeGrpcUrl);
+            }
+
             if (Program.Settings.FtxIsEnabled)
             {
                 builder.RegisterExternalMarketClient(Program.Settings.FtxExchangeGrpcUrl);
