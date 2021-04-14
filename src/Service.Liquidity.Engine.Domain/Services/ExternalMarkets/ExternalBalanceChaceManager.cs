@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
+using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.Service.Tools;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 
@@ -35,15 +36,20 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
         {
             _timer.ChangeInterval(TimeSpan.FromMilliseconds(_settings.GetMarketMakerSettings().RefreshExternalBalanceIntervalMSec));
 
-            await RefreshBalances();
+            await RefreshBalancesAndMarketInfo();
         }
 
-        private async Task RefreshBalances()
+        private async Task RefreshBalancesAndMarketInfo()
         {
+            var rootActivity = MyTelemetry.StartActivity("Refresh external market data cache");
+
             foreach (var name in _manager.GetMarketNames())
             {
+                var activity = MyTelemetry.StartActivity($"Refresh market {name}")?.AddTag("market", name);
+
                 try
                 {
+
                     var client = _manager.GetExternalMarketByName(name);
 
                     var resp = await client.GetBalancesAsync();
@@ -79,6 +85,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Cannot refresh external balances and instrument info for {marketName}", name);
+                    ex.FailActivity();
                 }
             }
         }
@@ -135,6 +142,11 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
 
                 return marketData.Values.ToList();
             }
+        }
+
+        public Task RefreshData()
+        {
+            return DoRefresh();
         }
 
         public void Start()

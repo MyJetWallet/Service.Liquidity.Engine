@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 
 namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
@@ -12,5 +13,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
         ExchangeMarketInfo GetMarketInfo(string marketName, string symbol);
 
         List<ExchangeMarketInfo> GetMarketInfo(string marketName);
+
+        Task RefreshData();
     }
 }
