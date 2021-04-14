@@ -171,7 +171,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                     return;
                 }
 
-                var useExternalBalance = globalSetting.UseExternalBalancePercentage / 100;
+                var useExternalBalance = (decimal)globalSetting.UseExternalBalancePercentage / 100;
                 var externalBaseBalance = (double)(_externalBalanceCacheManager.GetBalances(setting.ExternalMarket, externalMarketInfo.BaseAsset).Free * useExternalBalance);
                 var externalQuoteBalance = (double)(_externalBalanceCacheManager.GetBalances(setting.ExternalMarket, externalMarketInfo.QuoteAsset).Free * useExternalBalance);
 

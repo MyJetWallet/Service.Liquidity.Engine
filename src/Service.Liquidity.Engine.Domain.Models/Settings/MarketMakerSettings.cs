@@ -8,7 +8,7 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
     {
         [DataMember(Order = 1)] public EngineMode Mode { get; set; }
         [DataMember(Order = 2)] public int MarketMakerRefreshIntervalMSec { get; set; }
-        [DataMember(Order = 3)] public decimal UseExternalBalancePercentage { get; set; }
+        [DataMember(Order = 3)] public double UseExternalBalancePercentage { get; set; }
         [DataMember(Order = 4)] public int RefreshExternalBalanceIntervalMSec { get; set; }
 
 

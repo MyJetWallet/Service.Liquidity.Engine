@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 
@@ -37,6 +38,11 @@ namespace Service.Liquidity.Engine.Tests.Mock
         }
 
         public List<ExchangeMarketInfo> GetMarketInfo(string marketName)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task RefreshData()
         {
             throw new System.NotImplementedException();
         }
