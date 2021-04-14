@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using MyJetWallet.Domain.ExternalMarketApi;
+using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -16,6 +17,13 @@ namespace Service.Liquidity.Engine.Modules
             {
                 builder.RegisterExternalMarketClient(Program.Settings.FtxExchangeGrpcUrl);
             }
+
+            builder
+                .RegisterType<ExternalBalanceCacheManager>()
+                .As<IExternalBalanceCacheManager>()
+                .As<IStartable>()
+                .AutoActivate()
+                .SingleInstance();
         }
     }
 }

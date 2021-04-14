@@ -15,6 +15,7 @@ using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
 using Service.Balances.Domain.Models;
 using Service.Liquidity.Engine.Domain.Models.Settings;
+using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
@@ -37,6 +38,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
         private readonly ITradingServiceClient _tradingServiceClient;
         private readonly ISpotInstrumentDictionaryClient _instrumentDictionary;
         private readonly IAssetsDictionaryClient _assetsDictionary;
+        private readonly IExternalBalanceCacheManager _externalBalanceCacheManager;
 
         public MirroringLiquidityProvider(
             ILogger<MirroringLiquidityProvider> logger,
@@ -46,7 +48,8 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             ILpWalletManager walletManager,
             ITradingServiceClient tradingServiceClient,
             ISpotInstrumentDictionaryClient instrumentDictionary,
-            IAssetsDictionaryClient assetsDictionary)
+            IAssetsDictionaryClient assetsDictionary,
+            IExternalBalanceCacheManager externalBalanceCacheManager)
         {
             _logger = logger;
             _orderIdGenerator = orderIdGenerator;
@@ -56,6 +59,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             _tradingServiceClient = tradingServiceClient;
             _instrumentDictionary = instrumentDictionary;
             _assetsDictionary = assetsDictionary;
+            _externalBalanceCacheManager = externalBalanceCacheManager;
         }
 
         public async Task RefreshOrders()
@@ -158,6 +162,20 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                 var baseBalance = localBalances.FirstOrDefault(e => e.AssetId == baseAsset.Symbol)?.Balance ?? 0;
                 var quoteBalance = localBalances.FirstOrDefault(e => e.AssetId == quoteAsset.Symbol)?.Balance ?? 0;
 
+                var externalMarketInfo = _externalBalanceCacheManager.GetMarketInfo(setting.ExternalMarket, setting.ExternalSymbol);
+                if (externalMarketInfo == null)
+                {
+                    _logger.LogError(
+                        "Cannot handle {symbol} [{wallet}]. External market info do not found: {externalMarket}, {externalSymbol}",
+                        setting.InstrumentSymbol, setting.WalletName, setting.ExternalMarket, setting.ExternalSymbol);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    return;
+                }
+
+                var useExternalBalance = globalSetting.UseExternalBalancePercentage / 100;
+                var externalBaseBalance = (double)(_externalBalanceCacheManager.GetBalances(setting.ExternalMarket, externalMarketInfo.BaseAsset).Free * useExternalBalance);
+                var externalQuoteBalance = (double)(_externalBalanceCacheManager.GetBalances(setting.ExternalMarket, externalMarketInfo.QuoteAsset).Free * useExternalBalance);
+
 
                 var orderBase = _orderIdGenerator.GenerateBase();
 
@@ -203,6 +221,11 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                             if (baseVolumeTotal + volume > setting.MaxSellSideVolume)
                             {
                                 volume = setting.MaxSellSideVolume - baseVolumeTotal;
+                            }
+
+                            if (baseVolumeTotal + volume > externalBaseBalance)
+                            {
+                                volume = externalBaseBalance - baseVolumeTotal;
                             }
 
                             if (volume < (double) instrument.MinVolume)
@@ -257,6 +280,11 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
                             if (baseVolumeTotal + volume > setting.MaxBuySideVolume)
                             {
                                 volume = setting.MaxBuySideVolume - baseVolumeTotal;
+                            }
+
+                            if (quoteVolumeTotal + quoteVolume > externalQuoteBalance)
+                            {
+                                volume = (externalQuoteBalance - quoteVolumeTotal) / price;
                             }
 
                             if (volume < (double) instrument.MinVolume)

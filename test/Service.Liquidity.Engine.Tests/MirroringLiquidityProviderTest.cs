@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 using NUnit.Framework;
@@ -235,10 +236,10 @@ namespace Service.Liquidity.Engine.Tests
             SetupEnvironment_1();
             _assetDictionary.Data["BTC"].Accuracy = 2;
 
-            _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
+            _orderBookManager.Data[("BTC/USD", "FTX")] = new LeOrderBook
             {
                 Symbol = "BTC/USD",
-                Source = ExchangeNames.FTX,
+                Source = "FTX",
                 Timestamp = DateTime.UtcNow,
                 Asks = new List<LeOrderBookLevel>()
                 {
@@ -266,10 +267,10 @@ namespace Service.Liquidity.Engine.Tests
             SetupEnvironment_1();
             _instrumentDictionaryMock.Data.First().Value.Accuracy = 2;
 
-            _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
+            _orderBookManager.Data[("BTC/USD", "FTX")] = new LeOrderBook
             {
                 Symbol = "BTC/USD",
-                Source = ExchangeNames.FTX,
+                Source = "FTX",
                 Timestamp = DateTime.UtcNow,
                 Asks = new List<LeOrderBookLevel>()
                 {
@@ -319,10 +320,10 @@ namespace Service.Liquidity.Engine.Tests
 
             _walletManager.Balances["FTX"]["USD"].Balance = 40057.32;
 
-            _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
+            _orderBookManager.Data[("BTC/USD", "FTX")] = new LeOrderBook
             {
                 Symbol = "BTC/USD",
-                Source = ExchangeNames.FTX,
+                Source = "FTX",
                 Timestamp = DateTime.UtcNow,
                 Asks = new List<LeOrderBookLevel>(),
                 Bids = new List<LeOrderBookLevel>()
@@ -351,10 +352,10 @@ namespace Service.Liquidity.Engine.Tests
             SetupEnvironment_1();
             _instrumentDictionaryMock.Data.First().Value.Accuracy = 2;
 
-            _orderBookManager.Data[("BTC/USD", ExchangeNames.FTX)] = new LeOrderBook
+            _orderBookManager.Data[("BTC/USD", "FTX")] = new LeOrderBook
             {
                 Symbol = "BTC/USD",
-                Source = ExchangeNames.FTX,
+                Source = "FTX",
                 Timestamp = DateTime.UtcNow,
                 Asks = new List<LeOrderBookLevel>(),
                 Bids = new List<LeOrderBookLevel>()
@@ -428,6 +429,140 @@ namespace Service.Liquidity.Engine.Tests
             Assert.AreEqual("-0.4", orders[3].Volume, "wrong price 4");
             Assert.AreEqual("-0.1", orders[4].Volume, "wrong price 5");
             Assert.AreEqual("-0.2", orders[5].Volume, "wrong price 6");
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToLocalBalance_Sell()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 1;
+            _walletManager.Balances["FTX"]["USD"].Balance = 500000;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            Assert.AreEqual(3, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(4m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-1m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToLocalBalance_Buy()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 0;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(0, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(0m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToExternalBalance_Sell_1()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Balance = 0;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Free = 0;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Free = 1000000;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            request.Should().NotBeNull("ME request cannot be null");
+
+            Assert.AreEqual(0, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(4m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(0m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToExternalBalance_Sell_2()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Balance = 1;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Free = 1.2m;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Free = 1000000;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            request.Should().NotBeNull("ME request cannot be null");
+
+            Assert.AreEqual(4, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(4m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-1.2m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToExternalBalance_Buy_1()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Balance = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Free = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Free = 0;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            request.Should().NotBeNull("ME request cannot be null");
+
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(0, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(0m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+        }
+
+        [Test]
+        public async Task Split_OrderBook_ToExternalBalance_Buy_2()
+        {
+            SetupEnvironment_1();
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Balance = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Free = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Balance = 0;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Free = 70000;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            request.Should().NotBeNull("ME request cannot be null");
+
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(4, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(1.1651m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
         }
 
 

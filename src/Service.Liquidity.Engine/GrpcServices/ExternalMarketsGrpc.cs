@@ -11,10 +11,12 @@ namespace Service.Liquidity.Engine.GrpcServices
     public class ExternalMarketsGrpc : IExternalMarketsGrpc
     {
         private readonly IExternalMarketManager _externalMarketManager;
+        private readonly IExternalBalanceCacheManager _externalBalanceCacheManager;
 
-        public ExternalMarketsGrpc(IExternalMarketManager externalMarketManager)
+        public ExternalMarketsGrpc(IExternalMarketManager externalMarketManager, IExternalBalanceCacheManager externalBalanceCacheManager)
         {
             _externalMarketManager = externalMarketManager;
+            _externalBalanceCacheManager = externalBalanceCacheManager;
         }
 
         public Task<GrpcResponseWithData<GrpcList<string>>> GetExternalMarketListAsync()
@@ -26,30 +28,18 @@ namespace Service.Liquidity.Engine.GrpcServices
 
         public async Task<GrpcResponseWithData<GrpcList<AssetBalanceDto>>> GetBalancesAsync(SourceDto request)
         {
-            var market = _externalMarketManager.GetExternalMarketByName(request.Source);
+            var data = _externalBalanceCacheManager.GetBalances(request.Source);
 
-            if (market == null)
-                return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(new List<AssetBalanceDto>()));
-
-            var data = await market.GetBalancesAsync();
-
-            var result = data.Balances.Select(e => new AssetBalanceDto(e.Symbol, (double)e.Balance, (double)e.Free)).ToList();
+            var result = data.Select(e => new AssetBalanceDto(e.Symbol, (double)e.Balance, (double)e.Free)).ToList();
 
             return GrpcResponseWithData<GrpcList<AssetBalanceDto>>.Create(GrpcList<AssetBalanceDto>.Create(result));
         }
 
         public async Task<GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>> GetInstrumentsAsync(SourceDto request)
         {
-            var market = _externalMarketManager.GetExternalMarketByName(request.Source);
+            var data = _externalBalanceCacheManager.GetMarketInfo(request.Source);
 
-            if (market == null)
-            {
-                return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(new List<ExchangeMarketInfo>()));
-            }
-
-            var data = await market.GetMarketInfoListAsync();
-
-            return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(data.Infos));
+            return GrpcResponseWithData<GrpcList<ExchangeMarketInfo>>.Create(GrpcList<ExchangeMarketInfo>.Create(data));
         }
     }
 }
