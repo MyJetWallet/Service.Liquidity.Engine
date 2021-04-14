@@ -20,7 +20,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
         private readonly object _sync = new();
         private readonly MyTaskTimer _timer;
 
-        public ExternalBalanceCacheManager(IExternalMarketManager manager, IMarketMakerSettingsAccessor settings, Logger<ExternalBalanceCacheManager> logger)
+        public ExternalBalanceCacheManager(IExternalMarketManager manager, IMarketMakerSettingsAccessor settings, ILogger<ExternalBalanceCacheManager> logger)
         {
             _manager = manager;
             _settings = settings;
