@@ -35,5 +35,10 @@ namespace Service.Liquidity.Engine.Tests.Mock
 
             return data;
         }
+
+        public List<ExchangeMarketInfo> GetMarketInfo(string marketName)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
