@@ -14,7 +14,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
     {
         private readonly IExternalMarketManager _manager;
         private readonly IMarketMakerSettingsAccessor _settings;
-        private readonly Logger<ExternalBalanceCacheManager> _logger;
+        private readonly ILogger<ExternalBalanceCacheManager> _logger;
         private readonly Dictionary<string, Dictionary<string, ExchangeBalance>> _balances = new();
         private readonly Dictionary<string, Dictionary<string, ExchangeMarketInfo>> _markets = new();
         private readonly object _sync = new();
