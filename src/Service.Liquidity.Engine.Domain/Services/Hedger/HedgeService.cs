@@ -170,7 +170,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
         private string GenerateReferenceId(PositionPortfolio position)
         {
-            return $"pos:{position.Id}";
+            return $"pos-{position.Id}";
         }
     }
 }
