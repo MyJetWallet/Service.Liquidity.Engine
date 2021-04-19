@@ -565,6 +565,32 @@ namespace Service.Liquidity.Engine.Tests
             Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
         }
 
+        [Test]
+        public async Task Split_OrderBook_ToExternalBalance_Buy_3()
+        {
+            SetupEnvironment_1();
+            _settingsMock.MlSettings[0].MaxBuySideVolume = 0.1;
+
+            _walletManager.Balances["FTX"]["BTC"].Balance = 5;
+            _walletManager.Balances["FTX"]["USD"].Balance = 1000000;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Balance = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"].Free = 5;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Balance = 0;
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"].Free = 21000;
+
+            await _engine.RefreshOrders();
+
+            var request = _tradingService.CallList.FirstOrDefault();
+
+            request.Should().NotBeNull("ME request cannot be null");
+
+            Assert.AreEqual(5, request.Orders.Count(o => decimal.Parse(o.Volume) < 0));
+            Assert.AreEqual(1, request.Orders.Count(o => decimal.Parse(o.Volume) > 0));
+
+            Assert.AreEqual(0.1m, request.Orders.Where(o => decimal.Parse(o.Volume) > 0).Sum(e => decimal.Parse(e.Volume)));
+            Assert.AreEqual(-4m, request.Orders.Where(o => decimal.Parse(o.Volume) < 0).Sum(e => decimal.Parse(e.Volume)));
+        }
+
 
     }
 

@@ -70,7 +70,7 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
             var globalSetting = _settingsAccessor.GetMarketMakerSettings();
 
             var list = new List<Task>();
-            foreach (var setting in settings)
+            foreach (var setting in settings)//.Where(s => s.InstrumentSymbol == "XRPUSD"))
             {
                 list.Add(RefreshInstrument(setting, globalSetting));
             }
@@ -214,32 +214,33 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
                             if (baseVolumeTotal + volume > baseBalance)
                             {
-                                volume = baseBalance - baseVolumeTotal;
+                                volume = Math.Min(volume, baseBalance - baseVolumeTotal);
                             }
 
                             if (baseVolumeTotal + volume > setting.MaxSellSideVolume)
                             {
-                                volume = setting.MaxSellSideVolume - baseVolumeTotal;
+                                volume = Math.Min(volume, setting.MaxSellSideVolume - baseVolumeTotal);
                             }
 
                             if (baseVolumeTotal + volume > externalBaseBalance)
                             {
-                                volume = externalBaseBalance - baseVolumeTotal;
+                                volume = Math.Min(volume, externalBaseBalance - baseVolumeTotal);
                             }
 
-                            if (volume < (double) instrument.MinVolume)
-                                continue;
 
                             if (volume > (double) instrument.MaxVolume)
                                 volume = (double) instrument.MaxVolume;
 
                             if (price * volume > (double) instrument.MaxOppositeVolume)
                             {
-                                volume = (double) instrument.MaxOppositeVolume / price;
+                                volume = Math.Min(volume, (double) instrument.MaxOppositeVolume / price);
                             }
 
                             volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
                             volume = Math.Round(volume, baseAsset.Accuracy, MidpointRounding.ToZero);
+
+                            if (volume < (double)instrument.MinVolume)
+                                continue;
 
                             request.Orders.Add(new MultiLimitOrder.Types.Order()
                             {
@@ -273,32 +274,32 @@ namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 
                             if (quoteVolumeTotal + quoteVolume > quoteBalance)
                             {
-                                volume = (quoteBalance - quoteVolumeTotal) / price;
+                                volume = Math.Min(volume, (quoteBalance - quoteVolumeTotal) / price);
                             }
 
                             if (baseVolumeTotal + volume > setting.MaxBuySideVolume)
                             {
-                                volume = setting.MaxBuySideVolume - baseVolumeTotal;
+                                volume = Math.Min(volume, setting.MaxBuySideVolume - baseVolumeTotal);
                             }
 
                             if (quoteVolumeTotal + quoteVolume > externalQuoteBalance)
                             {
-                                volume = (externalQuoteBalance - quoteVolumeTotal) / price;
+                                volume = Math.Min(volume, (externalQuoteBalance - quoteVolumeTotal) / price);
                             }
-
-                            if (volume < (double) instrument.MinVolume)
-                                continue;
 
                             if (volume > (double) instrument.MaxVolume)
                                 volume = (double) instrument.MaxVolume;
 
                             if (price * volume > (double) instrument.MaxOppositeVolume)
                             {
-                                volume = (double) instrument.MaxOppositeVolume / price;
+                                volume = Math.Min(volume, (double) instrument.MaxOppositeVolume / price);
                             }
 
                             volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
                             volume = Math.Round(volume, baseAsset.Accuracy, MidpointRounding.ToZero);
+
+                            if (volume < (double)instrument.MinVolume)
+                                continue;
 
                             request.Orders.Add(new MultiLimitOrder.Types.Order()
                             {
