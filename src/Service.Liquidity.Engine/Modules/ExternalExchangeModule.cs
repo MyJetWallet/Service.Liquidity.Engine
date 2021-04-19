@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using MyJetWallet.Domain.ExternalMarketApi;
 using Service.Liquidity.Engine.Domain.Services.ExternalMarkets;
 
@@ -8,14 +9,13 @@ namespace Service.Liquidity.Engine.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            if (Program.Settings.FtxSimulateIsEnabled)
+            foreach (var externalExchange in Program.Settings.ExternalExchange)
             {
-                builder.RegisterExternalMarketClient(Program.Settings.FtxSimulateExchangeGrpcUrl);
-            }
-
-            if (Program.Settings.FtxIsEnabled)
-            {
-                builder.RegisterExternalMarketClient(Program.Settings.FtxExchangeGrpcUrl);
+                if (externalExchange.Value?.IsEnabled == true)
+                {
+                    Console.WriteLine($"External exchange: {externalExchange.Key}");
+                    builder.RegisterExternalMarketClient(externalExchange.Value.GrpcUrl);
+                }
             }
 
             builder

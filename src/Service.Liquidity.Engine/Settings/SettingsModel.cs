@@ -1,25 +1,12 @@
 ﻿using System.Collections.Generic;
-using SimpleTrading.SettingsReader;
+using MyYamlParser;
 
 namespace Service.Liquidity.Engine.Settings
 {
-    [YamlAttributesOnly]
     public class SettingsModel
     {
         [YamlProperty("LiquidityEngine.SeqServiceUrl")]
         public string SeqServiceUrl { get; set; }
-
-        [YamlProperty("LiquidityEngine.ExternalExchange.FTXSimulation.IsEnabled")]
-        public bool FtxSimulateIsEnabled { get; set; }
-
-        [YamlProperty("LiquidityEngine.ExternalExchange.FTXSimulation.ExchangeGrpcUrl")]
-        public string FtxSimulateExchangeGrpcUrl { get; set; }
-
-        [YamlProperty("LiquidityEngine.ExternalExchange.FTX.IsEnabled")]
-        public bool FtxIsEnabled { get; set; }
-
-        [YamlProperty("LiquidityEngine.ExternalExchange.FTX.ExchangeGrpcUrl")]
-        public string FtxExchangeGrpcUrl { get; set; }
 
         [YamlProperty("LiquidityEngine.BalancesGrpcServiceUrl")]
         public string BalancesGrpcServiceUrl { get; set; }
@@ -45,7 +32,22 @@ namespace Service.Liquidity.Engine.Settings
         [YamlProperty("LiquidityEngine.ZipkinUrl")]
         public string ZipkinUrl { get; set; }
 
+        [YamlProperty("LiquidityEngine.ExternalExchange")]
+        public Dictionary<string, ExternalExchange> ExternalExchange { get; set; }
 
+
+
+
+
+    }
+
+    public class ExternalExchange
+    {
+        [YamlProperty("IsEnabled")]
+        public bool IsEnabled { get; set; }
+
+        [YamlProperty("GrpcUrl")]
+        public string GrpcUrl { get; set; }
     }
 
 }

@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
+using MySettingsReader;
 using Service.Liquidity.Engine.Settings;
-using SimpleTrading.SettingsReader;
 
 namespace Service.Liquidity.Engine
 {
@@ -24,7 +24,7 @@ namespace Service.Liquidity.Engine
         {
             return () =>
             {
-                var settings = SettingsReader.ReadSettings<SettingsModel>(SettingsFileName);
+                var settings = SettingsReader.GetSettings<SettingsModel>(SettingsFileName);
                 var value = getter.Invoke(settings);
                 return value;
             };
@@ -34,7 +34,7 @@ namespace Service.Liquidity.Engine
         {
             Console.Title = "MyJetWallet Service.Liquidity.Engine";
 
-            Settings = SettingsReader.ReadSettings<SettingsModel>(SettingsFileName);
+            Settings = SettingsReader.GetSettings<SettingsModel>(SettingsFileName);
 
             using var loggerFactory = LogConfigurator.Configure("MyJetWallet", Settings.SeqServiceUrl);
 
