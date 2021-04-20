@@ -36,7 +36,7 @@ namespace Service.Liquidity.Engine.Settings
         [YamlProperty("LiquidityEngine.ExternalExchange")]
         public Dictionary<string, ExternalExchange> ExternalExchange { get; set; }
 
-        [YamlProperty("SimulationFTX.ElkLogs")]
+        [YamlProperty("LiquidityEngine.ElkLogs")]
         public LogElkSettings ElkLogs { get; set; }
     }
 
