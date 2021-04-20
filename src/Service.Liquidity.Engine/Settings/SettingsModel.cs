@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MyJetWallet.Sdk.Service;
 using MyYamlParser;
 
 namespace Service.Liquidity.Engine.Settings
@@ -35,10 +36,8 @@ namespace Service.Liquidity.Engine.Settings
         [YamlProperty("LiquidityEngine.ExternalExchange")]
         public Dictionary<string, ExternalExchange> ExternalExchange { get; set; }
 
-
-
-
-
+        [YamlProperty("SimulationFTX.ElkLogs")]
+        public LogElkSettings ElkLogs { get; set; }
     }
 
     public class ExternalExchange
