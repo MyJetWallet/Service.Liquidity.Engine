@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.1.0" />
+    <PackageReference Include="Autofac" Version="6.2.0" />
     <PackageReference Include="Grpc.Core.Api" Version="2.37.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2021.1.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.37.0" />
@@ -19,7 +19,7 @@
     <PackageReference Include="MyJetWallet.Service.TradeHistory.Client" Version="1.1.0" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
     <PackageReference Include="protobuf-net.Grpc" Version="1.0.152" />
-    <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="1.0.5" />
+    <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="1.0.7" />
     <PackageReference Include="MyJetWallet.Domain" Version="1.0.30" />
     <PackageReference Include="MyJetWallet.Domain.ExternalMarketApi" Version="1.1.0" />
   </ItemGroup>
