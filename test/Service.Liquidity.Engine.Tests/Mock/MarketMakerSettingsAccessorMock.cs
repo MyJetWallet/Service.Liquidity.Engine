@@ -10,6 +10,8 @@ namespace Service.Liquidity.Engine.Tests
 
         public List<MirroringLiquiditySettings> MlSettings { get; set; } = new();
 
+        public List<LiquidityProviderInstrumentSettings> LpSettings { get; set; } = new();
+
         public MarketMakerSettings GetMarketMakerSettings()
         {
             return MmSettings;
@@ -18,6 +20,11 @@ namespace Service.Liquidity.Engine.Tests
         public List<MirroringLiquiditySettings> GetMirroringLiquiditySettingsList()
         {
             return MlSettings;
+        }
+
+        public List<LiquidityProviderInstrumentSettings> GetLiquidityProviderSettings()
+        {
+            return LpSettings;
         }
     }
 }

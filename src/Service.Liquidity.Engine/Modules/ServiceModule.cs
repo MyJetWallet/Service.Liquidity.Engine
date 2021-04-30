@@ -9,6 +9,7 @@ using Service.AssetsDictionary.Client;
 using Service.Balances.Client;
 using Service.Balances.Grpc;
 using Service.Liquidity.Engine.Domain.NoSql;
+using Service.Liquidity.Engine.Domain.Services.LiquidityProvider;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
@@ -53,6 +54,15 @@ namespace Service.Liquidity.Engine.Modules
                 .SingleInstance();
 
             builder
+                .RegisterType<AggregateLiquidityProvider>()
+                .As<IMarketMaker>()
+                .As<IAggregateLiquidityProviderOrders>()
+                .AutoActivate()
+                .SingleInstance();
+
+            
+
+            builder
                 .RegisterType<OrderIdGenerator>()
                 .As<IOrderIdGenerator>()
                 .SingleInstance();
@@ -78,6 +88,9 @@ namespace Service.Liquidity.Engine.Modules
             RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(builder, SettingsHedgeGlobalNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsHedgeInstrumentNoSql>(builder, SettingsHedgeInstrumentNoSql.TableName);
+            RegisterMyNoSqlWriter<SettingsLiquidityProviderInstrumentNoSql>(builder, SettingsLiquidityProviderInstrumentNoSql.TableName);
+
+            
         }
 
         private void RegisterMyNoSqlTcpClient(ContainerBuilder builder)

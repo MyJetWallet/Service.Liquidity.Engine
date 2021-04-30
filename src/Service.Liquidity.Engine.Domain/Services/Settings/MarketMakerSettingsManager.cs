@@ -18,8 +18,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         private readonly ILogger<MarketMakerSettingsManager> _logger;
         private readonly IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> _marketMakerDataWriter;
         private readonly IMyNoSqlServerDataWriter<SettingsMirroringLiquidityNoSql> _mirrorLiquidityDataWriter;
+        private readonly IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> _lpInstrumentDataWriter;
 
-        private Dictionary<string, MirroringLiquiditySettings> _mirroringLiquiditySettings = new Dictionary<string, MirroringLiquiditySettings>();
+        private Dictionary<string, MirroringLiquiditySettings> _mirroringLiquiditySettings = new();
+        private Dictionary<string, LiquidityProviderInstrumentSettings> _lpInstrumentSettings = new();
         private MarketMakerSettings _marketMakerSettings = new MarketMakerSettings(EngineMode.Disabled);
 
         private readonly object _sync = new object();
@@ -27,11 +29,14 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         public MarketMakerSettingsManager(
             ILogger<MarketMakerSettingsManager> logger,
             IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> marketMakerDataWriter,
-            IMyNoSqlServerDataWriter<SettingsMirroringLiquidityNoSql> mirrorLiquidityDataWriter)
+            IMyNoSqlServerDataWriter<SettingsMirroringLiquidityNoSql> mirrorLiquidityDataWriter,
+            IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> lpInstrumentDataWriter
+            )
         {
             _logger = logger;
             _marketMakerDataWriter = marketMakerDataWriter;
             _mirrorLiquidityDataWriter = mirrorLiquidityDataWriter;
+            _lpInstrumentDataWriter = lpInstrumentDataWriter;
         }
 
         public async Task ChangeMarketMakerModeAsync(EngineMode mode)
@@ -166,6 +171,92 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             }
         }
 
+        public List<LiquidityProviderInstrumentSettings> GetLiquidityProviderSettings()
+        {
+            lock (_sync)
+            {
+                return _lpInstrumentSettings.Values.ToList();
+            }
+        }
+
+        public async Task AddLiquidityProviderSettings(LiquidityProviderInstrumentSettings settings)
+        {
+            using var action = MyTelemetry.StartActivity("Add Liquidity Provider Instrument");
+            settings.AddToActivityAsJsonTag("settings");
+
+            try
+            {
+                var entity = SettingsLiquidityProviderInstrumentNoSql.Create(settings);
+
+                var exist = await _lpInstrumentDataWriter.GetAsync(entity.PartitionKey, entity.RowKey);
+
+                if (exist != null)
+                {
+                    _logger.LogError(
+                        "Cannot add new Liquidity Provider Instrument, because already exist provider for symbol. Request: {jsonText}",
+                        JsonConvert.SerializeObject(settings));
+                    throw new Exception(
+                        $"Cannot add new Mirroring Liquidity Provider, because already exist provider for symbol {settings.Symbol}");
+                }
+
+                await _lpInstrumentDataWriter.InsertOrReplaceAsync(entity);
+
+                await ReloadSettings();
+
+                _logger.LogInformation("Added Liquidity Provider Instrument: {jsonText}",
+                    JsonConvert.SerializeObject(settings));
+            }
+            catch (Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
+        }
+
+        public async Task UpdateLiquidityProviderSettings(LiquidityProviderInstrumentSettings settings)
+        {
+            using var action = MyTelemetry.StartActivity("Update Liquidity Provider Instrument");
+            settings.AddToActivityAsJsonTag("settings");
+
+            try
+            {
+                await _lpInstrumentDataWriter.InsertOrReplaceAsync(SettingsLiquidityProviderInstrumentNoSql.Create(settings));
+
+                await ReloadSettings();
+
+                _logger.LogInformation("Updated Liquidity Provider Instrument: {jsonText}", JsonConvert.SerializeObject(settings));
+            }
+            catch (Exception ex)
+            {
+                ex.FailActivity();
+
+            }
+        }
+
+        public async Task RemoveLiquidityProviderSettings(string symbol)
+        {
+            using var action = MyTelemetry.StartActivity("Update Liquidity Provider Instrument");
+            new { symbol }.AddToActivityAsJsonTag("settings");
+
+            try
+            {
+                var entity = await _lpInstrumentDataWriter.DeleteAsync(SettingsLiquidityProviderInstrumentNoSql.GeneratePartitionKey(), SettingsLiquidityProviderInstrumentNoSql.GenerateRowKey(symbol));
+
+                if (entity != null)
+                    _logger.LogInformation("Removed Liquidity Provider Instrument: {jsonText}", JsonConvert.SerializeObject(entity.Settings));
+
+                await ReloadSettings();
+
+                _logger.LogInformation("Removed Liquidity Provider Instrument: {symbol}", symbol);
+            }
+            catch (Exception ex)
+            {
+                ex.FailActivity();
+                throw;
+            }
+        }
+
+
         public void Start()
         {
             ReloadSettings().GetAwaiter().GetResult();
@@ -179,12 +270,17 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             var mirrorLiquidity = (await _mirrorLiquidityDataWriter.GetAsync(SettingsMirroringLiquidityNoSql.GeneratePartitionKey()))
                 .ToList();
 
+            var lpInstrument = (await _lpInstrumentDataWriter.GetAsync(SettingsLiquidityProviderInstrumentNoSql.GeneratePartitionKey()))
+                .ToList();
+
             lock (_sync)
             {
                 if (marketMaker != null)
                     _marketMakerSettings = marketMaker.Settings;
 
                 _mirroringLiquiditySettings = mirrorLiquidity.ToDictionary(e => e.RowKey, e => e.Settings);
+
+                _lpInstrumentSettings = lpInstrument.ToDictionary(e => e.Settings.Symbol, e => e.Settings);
             }
         }
     }

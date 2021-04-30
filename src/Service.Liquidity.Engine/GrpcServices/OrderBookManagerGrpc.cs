@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
+using Service.Liquidity.Engine.Domain.Models.LiquidityProvider;
+using Service.Liquidity.Engine.Domain.Services.LiquidityProvider;
 using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Grpc;
 using Service.Liquidity.Engine.Grpc.Models;
@@ -11,10 +13,12 @@ namespace Service.Liquidity.Engine.GrpcServices
     public class OrderBookManagerGrpc: IOrderBookManagerGrpc
     {
         private readonly IOrderBookManager _orderBookManager;
+        private readonly IAggregateLiquidityProviderOrders _aggregateLiquidityProviderOrders;
 
-        public OrderBookManagerGrpc(IOrderBookManager orderBookManager)
+        public OrderBookManagerGrpc(IOrderBookManager orderBookManager, IAggregateLiquidityProviderOrders aggregateLiquidityProviderOrders)
         {
             _orderBookManager = orderBookManager;
+            _aggregateLiquidityProviderOrders = aggregateLiquidityProviderOrders;
         }
 
         public async Task<GrpcResponseWithData<LeOrderBook>> GetOrderBookAsync(GetOrderBookRequest request)
@@ -46,10 +50,16 @@ namespace Service.Liquidity.Engine.GrpcServices
             return GrpcResponseWithData<GrpcList<string>>.Create(GrpcList<string>.Create(data));
         }
 
-        public async Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync()
+        public Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync()
         {
             var data = _orderBookManager.GetSources();
-            return GrpcResponseWithData<GrpcList<string>>.Create(GrpcList<string>.Create(data.Result));
+            return GrpcResponseWithData<GrpcList<string>>.CreateTask(GrpcList<string>.Create(data.Result));
+        }
+
+        public Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync()
+        {
+            var data = _aggregateLiquidityProviderOrders.GetCurrentOrders();
+            return GrpcResponseWithData<GrpcList<LpOrder>>.CreateTask(GrpcList<LpOrder>.Create(data));
         }
     }
 }

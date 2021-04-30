@@ -23,11 +23,6 @@ using Status = ME.Contracts.Api.IncomingMessages.Status;
 
 namespace Service.Liquidity.Engine.Domain.Services.MarketMakers
 {
-    public static class Mathematics
-    {
-        public static int AccuracyToNormalizeDouble { get; set; } = 12;
-    }
-
     public class MirroringLiquidityProvider: IMarketMaker
     {
         private readonly ILogger<MirroringLiquidityProvider> _logger;

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
+using Service.Liquidity.Engine.Domain.Models.LiquidityProvider;
 using Service.Liquidity.Engine.Grpc.Models;
 
 namespace Service.Liquidity.Engine.Grpc
@@ -23,5 +24,8 @@ namespace Service.Liquidity.Engine.Grpc
 
         [OperationContract]
         Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync();
+
+        [OperationContract]
+        Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync();
     }
 }

@@ -8,5 +8,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         MarketMakerSettings GetMarketMakerSettings();
 
         List<MirroringLiquiditySettings> GetMirroringLiquiditySettingsList();
+
+        List<LiquidityProviderInstrumentSettings> GetLiquidityProviderSettings();
     }
 }

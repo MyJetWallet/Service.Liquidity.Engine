@@ -54,5 +54,26 @@ namespace Service.Liquidity.Engine.GrpcServices
 
             return Task.FromResult(GrpcList<MirroringLiquiditySettings>.Create(data));
         }
+
+        public Task<GrpcList<LiquidityProviderInstrumentSettings>> GetLiquidityProviderInstrumentSettingsListAsync()
+        {
+            var data = _accessor.GetLiquidityProviderSettings();
+            return Task.FromResult(GrpcList<LiquidityProviderInstrumentSettings>.Create(data));
+        }
+
+        public Task AddLiquidityProviderInstrumentSettingsAsync(LiquidityProviderInstrumentSettings setting)
+        {
+            return _manager.AddLiquidityProviderSettings(setting);
+        }
+
+        public Task UpdateLiquidityProviderInstrumentSettingsAsync(LiquidityProviderInstrumentSettings setting)
+        {
+            return _manager.UpdateLiquidityProviderSettings(setting);
+        }
+
+        public Task RemoveLiquidityProviderInstrumentSettingsAsync(RemoveSymbolRequest request)
+        {
+            return _manager.RemoveLiquidityProviderSettings(request.Symbol);
+        }
     }
 }

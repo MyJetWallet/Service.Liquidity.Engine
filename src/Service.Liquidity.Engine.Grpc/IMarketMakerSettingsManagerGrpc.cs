@@ -9,10 +9,17 @@ namespace Service.Liquidity.Engine.Grpc
     public interface IMarketMakerSettingsManagerGrpc
     {
         [OperationContract]
+        Task<MarketMakerSettings> GetMarketMakerSettingsAsync();
+
+        [OperationContract]
         Task ChangeMarketMakerModeAsync(ChangeMarketMakerModeRequest request);
 
         [OperationContract]
         Task UpdateMarketMakerSettingsAsync(MarketMakerSettings request);
+
+
+        [OperationContract]
+        Task<GrpcList<MirroringLiquiditySettings>> GetMirroringLiquiditySettingsListAsync();
 
         [OperationContract]
         Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
@@ -23,10 +30,18 @@ namespace Service.Liquidity.Engine.Grpc
         [OperationContract]
         Task RemoveMirroringLiquiditySettingsAsync(RemoveMirroringLiquiditySettingsRequest request);
 
-        [OperationContract]
-        Task<MarketMakerSettings> GetMarketMakerSettingsAsync();
+
 
         [OperationContract]
-        Task<GrpcList<MirroringLiquiditySettings>> GetMirroringLiquiditySettingsListAsync();
+        Task<GrpcList<LiquidityProviderInstrumentSettings>> GetLiquidityProviderInstrumentSettingsListAsync();
+
+        [OperationContract]
+        Task AddLiquidityProviderInstrumentSettingsAsync(LiquidityProviderInstrumentSettings setting);
+
+        [OperationContract]
+        Task UpdateLiquidityProviderInstrumentSettingsAsync(LiquidityProviderInstrumentSettings setting);
+
+        [OperationContract]
+        Task RemoveLiquidityProviderInstrumentSettingsAsync(RemoveSymbolRequest request);
     }
 }
