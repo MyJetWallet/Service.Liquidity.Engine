@@ -257,11 +257,14 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
             foreach (var lpOrder in externalOrders.Where(o => o.Status == LpOrderStatus.Todo))
             {
                 lpOrder.Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex);
+
+                var volume = lpOrder.Side == OrderSide.Buy ? lpOrder.Volume : -lpOrder.Volume;
+
                 request.Orders.Add(new MultiLimitOrder.Types.Order()
                 {
                     Id = lpOrder.Id,
                     Price = lpOrder.Price.ToString(CultureInfo.InvariantCulture),
-                    Volume = lpOrder.Volume.ToString(CultureInfo.InvariantCulture)
+                    Volume = volume.ToString(CultureInfo.InvariantCulture)
                 });
             }
 
@@ -336,7 +339,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                         if (volume < (double)instrument.MinVolume)
                             continue;
 
-                        list.Add(new LpOrder("", symbol, setting.ExternalMarket, price, -volume, OrderSide.Sell)
+                        list.Add(new LpOrder("", symbol, setting.ExternalMarket, price, volume, OrderSide.Sell)
                         {
                             Status = mode == EngineMode.Active ? LpOrderStatus.New : LpOrderStatus.Idle
                         });
