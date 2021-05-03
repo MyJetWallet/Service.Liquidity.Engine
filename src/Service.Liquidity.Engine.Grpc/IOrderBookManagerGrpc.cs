@@ -26,6 +26,6 @@ namespace Service.Liquidity.Engine.Grpc
         Task<GrpcResponseWithData<GrpcList<string>>> GetSourcesAsync();
 
         [OperationContract]
-        Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync();
+        Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync(GetLiquidityProviderLastOrderRequest request);
     }
 }

@@ -56,9 +56,9 @@ namespace Service.Liquidity.Engine.GrpcServices
             return GrpcResponseWithData<GrpcList<string>>.CreateTask(GrpcList<string>.Create(data.Result));
         }
 
-        public Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync()
+        public Task<GrpcResponseWithData<GrpcList<LpOrder>>> GetLiquidityProviderLastOrdersAsync(GetLiquidityProviderLastOrderRequest request)
         {
-            var data = _aggregateLiquidityProviderOrders.GetCurrentOrders();
+            var data = _aggregateLiquidityProviderOrders.GetCurrentOrders(request.BrokerId, request.Symbol);
             return GrpcResponseWithData<GrpcList<LpOrder>>.CreateTask(GrpcList<LpOrder>.Create(data));
         }
     }

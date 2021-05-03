@@ -5,6 +5,6 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 {
     public interface IAggregateLiquidityProviderOrders
     {
-        List<LpOrder> GetCurrentOrders();
+        List<LpOrder> GetCurrentOrders(string brokerId, string symbol);
     }
 }

@@ -38,7 +38,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
         private readonly IAssetsDictionaryClient _assetsDictionary;
         private readonly IExternalBalanceCacheManager _externalBalanceCacheManager;
 
-        private List<LpOrder> _lastOrders = new ();
+        private Dictionary<string, List<LpOrder>> _lastOrders = new ();
 
         public AggregateLiquidityProvider(ILogger<AggregateLiquidityProvider> logger,
             IOrderIdGenerator orderIdGenerator,
@@ -78,9 +78,17 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
         }
 
-        public List<LpOrder> GetCurrentOrders()
+        public List<LpOrder> GetCurrentOrders(string brokerId, string symbol)
         {
-            return _lastOrders;
+            lock (_lastOrders)
+            {
+                if (_lastOrders.TryGetValue($"{symbol}|{brokerId}", out var data))
+                {
+                    return data;
+                }
+            }
+
+            return new List<LpOrder>();
         }
 
         private async Task RefreshInstrument(LiquidityProviderInstrumentSettings setting, MarketMakerSettings globalSetting)
@@ -89,7 +97,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 ?.AddTag("instrument-symbol", setting.Symbol)
                 ?.AddTag("wallet-name", setting.LpWalletName);
 
-            if (globalSetting.Mode == EngineMode.Disabled)
+            if (globalSetting.Mode == EngineMode.Disabled || setting.Mode == EngineMode.Disabled)
                 return;
 
             var localWallet = _walletManager.GetWallet(setting.LpWalletName);
@@ -272,7 +280,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
             HandleMeResponse(setting.Symbol, setting.LpWalletName, resp, activity, externalOrders);
 
-            _lastOrders = externalOrders;
+            lock(_lastOrders) _lastOrders[$"{setting.Symbol}|{localWallet.BrokerId}"] = externalOrders;
         }
 
         private async Task<List<LpOrder>> GenerateOrdersFromSource(string symbol, LpSourceSettings setting, MarketMakerSettings globalSetting, ISpotInstrument instrument, IAsset baseAsset, IAsset quoteAsset, EngineMode mode)
