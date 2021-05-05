@@ -38,7 +38,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
         private readonly IAssetsDictionaryClient _assetsDictionary;
         private readonly IExternalBalanceCacheManager _externalBalanceCacheManager;
 
-        private Dictionary<string, List<LpOrder>> _lastOrders = new ();
+        private readonly Dictionary<string, List<LpOrder>> _lastOrders = new ();
 
         public AggregateLiquidityProvider(ILogger<AggregateLiquidityProvider> logger,
             IOrderIdGenerator orderIdGenerator,
@@ -97,8 +97,8 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 ?.AddTag("instrument-symbol", setting.Symbol)
                 ?.AddTag("wallet-name", setting.LpWalletName);
 
-            if (globalSetting.Mode == EngineMode.Disabled || setting.Mode == EngineMode.Disabled)
-                return;
+            //if (globalSetting.Mode == EngineMode.Disabled || setting.Mode == EngineMode.Disabled)
+            //    return;
 
             var localWallet = _walletManager.GetWallet(setting.LpWalletName);
             if (localWallet == null)
@@ -122,14 +122,20 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 return;
             }
 
-            if (!instrument.IsEnabled && 
-                setting.Mode != EngineMode.Disabled &&
-                globalSetting.Mode != EngineMode.Disabled)
+            if (!instrument.IsEnabled)
             {
-                _logger.LogError("Can not handle {symbol} [{wallet}]. Spot instrument do DISABLED",
-                    setting.Symbol, setting.LpWalletName);
-                activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
-                return;
+                if (setting.Mode != EngineMode.Disabled &&
+                    globalSetting.Mode != EngineMode.Disabled)
+                {
+                    _logger.LogDebug("Can not handle {symbol} [{wallet}]. Spot instrument do DISABLED", setting.Symbol, setting.LpWalletName);
+                    activity?.SetStatus(OpenTelemetry.Trace.Status.Error);
+                    activity?.SetTag("message", "instrument is disabled");
+                    return;
+                }
+                else
+                {
+                    return;
+                }
             }
 
             var baseAsset = _assetsDictionary.GetAssetById(new AssetIdentity()
@@ -176,8 +182,16 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                         continue;
 
                     var mode = source.Mode;
+
+                    if (setting.Mode == EngineMode.Disabled || globalSetting.Mode == EngineMode.Disabled || source.Mode == EngineMode.Disabled)
+                        mode = EngineMode.Disabled;
+
+                    if (mode == EngineMode.Active)
+                        mode = setting.Mode;
                     if (mode == EngineMode.Active)
                         mode = globalSetting.Mode;
+
+                    
 
                     var list = await GenerateOrdersFromSource(setting.Symbol, source, globalSetting, instrument, baseAsset, quoteAsset, mode);
                     externalOrders.AddRange(list);
@@ -211,7 +225,8 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                     level.Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex);
                     level.Status = LpOrderStatus.Todo;
-                    
+                    level.Volume = volume;
+
                     baseVolumeTotal += volume;
                 }
             }
@@ -231,7 +246,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                     if (quoteVolumeTotal + quoteVolume > quoteBalance)
                     {
-                        volume = Math.Min(volume, (quoteBalance - quoteVolumeTotal) / price);
+                        volume = Math.Min(volume, NotNegative((quoteBalance - quoteVolumeTotal) / price));
                     }
 
                     volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
@@ -242,6 +257,12 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                     level.Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex);
                     level.Status = LpOrderStatus.Todo;
+                    level.Volume = volume;
+
+
+                    quoteVolume = price * volume;
+                    quoteVolume = Math.Round(quoteVolume, Mathematics.AccuracyToNormalizeDouble);
+                    quoteVolume = Math.Round(quoteVolume, quoteAsset.Accuracy, MidpointRounding.ToPositiveInfinity);
 
                     quoteVolumeTotal += quoteVolume;
                     quoteVolumeTotal = Math.Round(quoteVolumeTotal, Mathematics.AccuracyToNormalizeDouble);
@@ -283,6 +304,12 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
             lock(_lastOrders) _lastOrders[$"{setting.Symbol}|{localWallet.BrokerId}"] = externalOrders;
         }
 
+        private double NotNegative(double value)
+        {
+            if (value < 0) return 0;
+            return value;
+        }
+
         private async Task<List<LpOrder>> GenerateOrdersFromSource(string symbol, LpSourceSettings setting, MarketMakerSettings globalSetting, ISpotInstrument instrument, IAsset baseAsset, IAsset quoteAsset, EngineMode mode)
         {
             var externalBook = await _orderBookManager.GetOrderBook(setting.ExternalSymbol, setting.ExternalMarket);
@@ -308,11 +335,8 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
             var list = new List<LpOrder>();
 
-            if (setting.Mode == EngineMode.Active || setting.Mode == EngineMode.Idle)
+            if (mode != EngineMode.Disabled)
             {
-                if (mode == EngineMode.Active && setting.Mode == EngineMode.Idle)
-                    mode = EngineMode.Idle;
-
                 {
                     var baseVolumeTotal = 0.0;
 
@@ -329,7 +353,12 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                         if (baseVolumeTotal + volume > externalBaseBalance)
                         {
-                            volume = Math.Min(volume, externalBaseBalance - baseVolumeTotal);
+                            volume = Math.Min(volume, NotNegative(externalBaseBalance - baseVolumeTotal));
+                        }
+
+                        if (baseVolumeTotal + volume > setting.MaxSellSideVolume)
+                        {
+                            volume = Math.Min(volume, NotNegative(setting.MaxSellSideVolume - baseVolumeTotal));
                         }
 
 
@@ -357,6 +386,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 }
 
                 {
+                    var baseVolumeTotal = 0.0;
                     var quoteVolumeTotal = 0.0;
 
                     foreach (var level in externalBook.Bids)
@@ -371,12 +401,16 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                         var quoteVolume = price * volume;
                         quoteVolume = Math.Round(quoteVolume, Mathematics.AccuracyToNormalizeDouble);
-                        quoteVolume = Math.Round(quoteVolume, quoteAsset.Accuracy,
-                            MidpointRounding.ToPositiveInfinity);
+                        quoteVolume = Math.Round(quoteVolume, quoteAsset.Accuracy, MidpointRounding.ToPositiveInfinity);
 
                         if (quoteVolumeTotal + quoteVolume > externalQuoteBalance)
                         {
-                            volume = Math.Min(volume, (externalQuoteBalance - quoteVolumeTotal) / price);
+                            volume = Math.Min(volume, NotNegative((externalQuoteBalance - quoteVolumeTotal) / price));
+                        }
+
+                        if (baseVolumeTotal + volume > setting.MaxBuySideVolume)
+                        {
+                            volume = Math.Min(volume, NotNegative(setting.MaxBuySideVolume - baseVolumeTotal));
                         }
 
                         if (volume > (double)instrument.MaxVolume)
@@ -398,7 +432,13 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                             Status = mode == EngineMode.Active ? LpOrderStatus.New : LpOrderStatus.Idle
                         });
 
+
+                        quoteVolume = price * volume;
+                        quoteVolume = Math.Round(quoteVolume, Mathematics.AccuracyToNormalizeDouble);
+                        quoteVolume = Math.Round(quoteVolume, quoteAsset.Accuracy, MidpointRounding.ToPositiveInfinity);
+
                         quoteVolumeTotal += quoteVolume;
+                        baseVolumeTotal += volume;
                         quoteVolumeTotal = Math.Round(quoteVolumeTotal, Mathematics.AccuracyToNormalizeDouble);
                     }
                 }
