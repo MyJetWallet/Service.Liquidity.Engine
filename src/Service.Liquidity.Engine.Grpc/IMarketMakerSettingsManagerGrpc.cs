@@ -19,20 +19,6 @@ namespace Service.Liquidity.Engine.Grpc
 
 
         [OperationContract]
-        Task<GrpcList<MirroringLiquiditySettings>> GetMirroringLiquiditySettingsListAsync();
-
-        [OperationContract]
-        Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
-
-        [OperationContract]
-        Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting);
-
-        [OperationContract]
-        Task RemoveMirroringLiquiditySettingsAsync(RemoveMirroringLiquiditySettingsRequest request);
-
-
-
-        [OperationContract]
         Task<GrpcList<LiquidityProviderInstrumentSettings>> GetLiquidityProviderInstrumentSettingsListAsync();
 
         [OperationContract]

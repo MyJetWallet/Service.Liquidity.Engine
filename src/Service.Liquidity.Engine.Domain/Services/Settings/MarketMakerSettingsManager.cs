@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
@@ -17,10 +15,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
     {
         private readonly ILogger<MarketMakerSettingsManager> _logger;
         private readonly IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> _marketMakerDataWriter;
-        private readonly IMyNoSqlServerDataWriter<SettingsMirroringLiquidityNoSql> _mirrorLiquidityDataWriter;
         private readonly IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> _lpInstrumentDataWriter;
-
-        private Dictionary<string, MirroringLiquiditySettings> _mirroringLiquiditySettings = new();
+        
         private Dictionary<string, LiquidityProviderInstrumentSettings> _lpInstrumentSettings = new();
         private MarketMakerSettings _marketMakerSettings = new MarketMakerSettings(EngineMode.Disabled);
 
@@ -29,13 +25,11 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         public MarketMakerSettingsManager(
             ILogger<MarketMakerSettingsManager> logger,
             IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> marketMakerDataWriter,
-            IMyNoSqlServerDataWriter<SettingsMirroringLiquidityNoSql> mirrorLiquidityDataWriter,
             IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> lpInstrumentDataWriter
             )
         {
             _logger = logger;
             _marketMakerDataWriter = marketMakerDataWriter;
-            _mirrorLiquidityDataWriter = mirrorLiquidityDataWriter;
             _lpInstrumentDataWriter = lpInstrumentDataWriter;
         }
 
@@ -51,87 +45,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             await _marketMakerDataWriter.InsertOrReplaceAsync(SettingsMarketMakerNoSql.Create(settings));
 
             _logger.LogInformation("Market Maker mode was changed to {modeText}", mode.ToString());
-        }
-
-        public async Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
-        {
-            using var action = MyTelemetry.StartActivity("Add Mirroring Liquidity Provider");
-            setting.AddToActivityAsJsonTag("settings");
-
-            try
-            {
-                var entity = SettingsMirroringLiquidityNoSql.Create(setting);
-
-                var exist = await _mirrorLiquidityDataWriter.GetAsync(entity.PartitionKey, entity.RowKey);
-
-                if (exist != null)
-                {
-                    _logger.LogError(
-                        "Cannot add new Mirroring Liquidity Provider, because already exist provider for symbol\\wallet. Request: {jsonText}",
-                        JsonConvert.SerializeObject(setting));
-                    throw new Exception(
-                        "Cannot add new Mirroring Liquidity Provider, because already exist provider for symbol\\wallet");
-                }
-
-                await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(entity);
-
-                await ReloadSettings();
-
-                _logger.LogInformation("Added MirroringLiquidity Settings: {jsonText}",
-                    JsonConvert.SerializeObject(setting));
-            }
-            catch (Exception ex)
-            {
-                ex.FailActivity();
-                throw;
-            }
-        }
-
-
-        public async Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
-        {
-            using var action = MyTelemetry.StartActivity("Update Mirroring Liquidity Provider");
-            setting.AddToActivityAsJsonTag("settings");
-
-            try
-            {
-                await _mirrorLiquidityDataWriter.InsertOrReplaceAsync(SettingsMirroringLiquidityNoSql.Create(setting));
-
-                await ReloadSettings();
-
-                _logger.LogInformation("Updated MirroringLiquidity Settings: {jsonText}",
-                    JsonConvert.SerializeObject(setting));
-            }
-            catch(Exception ex)
-            {
-                ex.FailActivity();
-                throw;
-            }
-        }
-
-        public async Task RemoveMirroringLiquiditySettingsAsync(string symbol, string walletName)
-        {
-            using var action = MyTelemetry.StartActivity("Update Mirroring Liquidity Provider");
-            new {symbol, walletName}.AddToActivityAsJsonTag("settings");
-
-            try
-            {
-                var entity = await _mirrorLiquidityDataWriter.DeleteAsync(SettingsMirroringLiquidityNoSql.GeneratePartitionKey(),
-                    SettingsMirroringLiquidityNoSql.GenerateRowKey(symbol, walletName));
-
-                if (entity != null)
-                    _logger.LogInformation("Removed MirroringLiquidity: {jsonText}", JsonConvert.SerializeObject(entity.Settings));
-
-                await ReloadSettings();
-
-                _logger.LogInformation("Removed MirroringLiquidity Settings: {symbol}, {walletName}", symbol,
-                    walletName);
-            }
-            catch(Exception ex)
-            {
-                ex.FailActivity();
-                throw;
-            }
         }
 
         public async Task UpdateMarketMakerSettingsAsync(MarketMakerSettings settings)
@@ -160,14 +73,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             lock (_sync)
             {
                 return _marketMakerSettings;
-            }
-        }
-
-        public List<MirroringLiquiditySettings> GetMirroringLiquiditySettingsList()
-        {
-            lock (_sync)
-            {
-                return _mirroringLiquiditySettings.Values.ToList();
             }
         }
 
@@ -267,9 +172,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             var marketMaker = (await _marketMakerDataWriter.GetAsync(SettingsMarketMakerNoSql.GeneratePartitionKey()))
                 .FirstOrDefault();
 
-            var mirrorLiquidity = (await _mirrorLiquidityDataWriter.GetAsync(SettingsMirroringLiquidityNoSql.GeneratePartitionKey()))
-                .ToList();
-
             var lpInstrument = (await _lpInstrumentDataWriter.GetAsync(SettingsLiquidityProviderInstrumentNoSql.GeneratePartitionKey()))
                 .ToList();
 
@@ -277,8 +179,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             {
                 if (marketMaker != null)
                     _marketMakerSettings = marketMaker.Settings;
-
-                _mirroringLiquiditySettings = mirrorLiquidity.ToDictionary(e => e.RowKey, e => e.Settings);
 
                 _lpInstrumentSettings = lpInstrument.ToDictionary(e => e.Settings.Symbol, e => e.Settings);
             }

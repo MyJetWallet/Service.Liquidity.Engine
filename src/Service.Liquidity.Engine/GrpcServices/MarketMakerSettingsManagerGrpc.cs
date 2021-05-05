@@ -27,32 +27,11 @@ namespace Service.Liquidity.Engine.GrpcServices
             return _manager.UpdateMarketMakerSettingsAsync(request);
         }
 
-        public Task AddMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
-        {
-            return _manager.AddMirroringLiquiditySettingsAsync(setting);
-        }
-
-        public Task UpdateMirroringLiquiditySettingsAsync(MirroringLiquiditySettings setting)
-        {
-            return _manager.UpdateMirroringLiquiditySettingsAsync(setting);
-        }
-
-        public Task RemoveMirroringLiquiditySettingsAsync(RemoveMirroringLiquiditySettingsRequest request)
-        {
-            return _manager.RemoveMirroringLiquiditySettingsAsync(request.Symbol, request.WalletName);
-        }
 
         public Task<MarketMakerSettings> GetMarketMakerSettingsAsync()
         {
             var data = _accessor.GetMarketMakerSettings();
             return Task.FromResult(data);
-        }
-
-        public Task<GrpcList<MirroringLiquiditySettings>> GetMirroringLiquiditySettingsListAsync()
-        {
-            var data = _accessor.GetMirroringLiquiditySettingsList();
-
-            return Task.FromResult(GrpcList<MirroringLiquiditySettings>.Create(data));
         }
 
         public Task<GrpcList<LiquidityProviderInstrumentSettings>> GetLiquidityProviderInstrumentSettingsListAsync()

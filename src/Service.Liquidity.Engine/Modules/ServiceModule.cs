@@ -48,12 +48,6 @@ namespace Service.Liquidity.Engine.Modules
                 .SingleInstance();
 
             builder
-                .RegisterType<MirroringLiquidityProvider>()
-                .As<IMarketMaker>()
-                .AutoActivate()
-                .SingleInstance();
-
-            builder
                 .RegisterType<AggregateLiquidityProvider>()
                 .As<IMarketMaker>()
                 .As<IAggregateLiquidityProviderOrders>()
@@ -84,7 +78,6 @@ namespace Service.Liquidity.Engine.Modules
 
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
-            RegisterMyNoSqlWriter<SettingsMirroringLiquidityNoSql>(builder, SettingsMirroringLiquidityNoSql.TableName);
             RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(builder, SettingsHedgeGlobalNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsHedgeInstrumentNoSql>(builder, SettingsHedgeInstrumentNoSql.TableName);

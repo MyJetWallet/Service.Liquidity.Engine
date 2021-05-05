@@ -8,18 +8,11 @@ namespace Service.Liquidity.Engine.Tests
     {
         public MarketMakerSettings MmSettings { get; set; } = new(EngineMode.Disabled);
 
-        public List<MirroringLiquiditySettings> MlSettings { get; set; } = new();
-
         public List<LiquidityProviderInstrumentSettings> LpSettings { get; set; } = new();
 
         public MarketMakerSettings GetMarketMakerSettings()
         {
             return MmSettings;
-        }
-
-        public List<MirroringLiquiditySettings> GetMirroringLiquiditySettingsList()
-        {
-            return MlSettings;
         }
 
         public List<LiquidityProviderInstrumentSettings> GetLiquidityProviderSettings()
