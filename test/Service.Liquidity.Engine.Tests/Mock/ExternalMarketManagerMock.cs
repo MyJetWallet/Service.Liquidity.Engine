@@ -14,6 +14,7 @@ namespace Service.Liquidity.Engine.Tests.Mock
     {
         public Dictionary<string, List<ExchangeTrade>> Trades = new();
         public Dictionary<string, double> Prices = new();
+        public Dictionary<string, ExchangeMarketInfo> MarketInfo = new();
 
         public IExternalMarket GetExternalMarketByName(string name)
         {
@@ -24,7 +25,7 @@ namespace Service.Liquidity.Engine.Tests.Mock
                     throw new Exception($"Do not found Mock ExternalMarket: {name}");
                 }
 
-                return new ExternalMarketMock(name, Trades, Prices);
+                return new ExternalMarketMock(name, Trades, Prices, MarketInfo);
             }
         }
 
@@ -40,11 +41,14 @@ namespace Service.Liquidity.Engine.Tests.Mock
         public string Name { get; set; }
         public Dictionary<string, double> Prices;
 
-        public ExternalMarketMock(string name, Dictionary<string, List<ExchangeTrade>> trades, Dictionary<string, double> prices)
+        public Dictionary<string, ExchangeMarketInfo> MarketInfo { get; set; }
+
+        public ExternalMarketMock(string name, Dictionary<string, List<ExchangeTrade>> trades, Dictionary<string, double> prices, Dictionary<string, ExchangeMarketInfo> marketInfo)
         {
             Trades = trades;
             Prices = prices;
             Name = name;
+            MarketInfo = marketInfo;
         }
 
 
@@ -60,7 +64,10 @@ namespace Service.Liquidity.Engine.Tests.Mock
 
         public Task<GetMarketInfoResponse> GetMarketInfoAsync(MarketRequest request)
         {
-            throw new NotImplementedException();
+            if (MarketInfo.TryGetValue(request.Market, out var info))
+                return Task.FromResult(new GetMarketInfoResponse(){Info = info });
+
+            return Task.FromResult(new GetMarketInfoResponse() { Info = null });
         }
 
         public Task<GetMarketInfoListResponse> GetMarketInfoListAsync()

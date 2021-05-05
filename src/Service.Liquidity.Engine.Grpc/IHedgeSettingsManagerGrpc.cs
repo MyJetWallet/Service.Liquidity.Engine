@@ -14,14 +14,5 @@ namespace Service.Liquidity.Engine.Grpc
 
         [OperationContract]
         Task UpdateSettingsAsync(HedgeSettings request);
-
-        [OperationContract]
-        Task<GrpcList<HedgeInstrumentSettings>> GetHedgeInstrumentSettingsListAsync();
-
-        [OperationContract]
-        Task AddOrUpdateSettingsAsync(HedgeInstrumentSettings request);
-
-        [OperationContract]
-        Task RemoveSettingsAsync(RemoveInstrumentHedgeSettingsRequest request);
     }
 }

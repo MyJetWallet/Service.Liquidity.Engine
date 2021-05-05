@@ -50,7 +50,6 @@ namespace Service.Liquidity.Engine.Modules
                 .RegisterType<HedgeSettingsManager>()
                 .AsSelf()
                 .As<IHedgeSettingsManager>()
-                .As<IHedgeInstrumentSettingsManager>()
                 .SingleInstance();
         }
     }

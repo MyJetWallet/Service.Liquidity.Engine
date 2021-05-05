@@ -7,10 +7,9 @@ using Service.Liquidity.Engine.Domain.Services.Settings;
 
 namespace Service.Liquidity.Engine.Tests.Mock
 {
-    public class HedgeSettingsManagerMock: IHedgeSettingsManager, IHedgeInstrumentSettingsManager
+    public class HedgeSettingsManagerMock: IHedgeSettingsManager
     {
         public HedgeSettings GlobalSettings = new HedgeSettings() {Mode = EngineMode.Disabled};
-        public Dictionary<string, HedgeInstrumentSettings> InstrumentSettings = new();
 
         public HedgeSettings GetGlobalHedgeSettings()
         {
@@ -20,26 +19,6 @@ namespace Service.Liquidity.Engine.Tests.Mock
         public Task UpdateSettingsAsync(HedgeSettings settings)
         {
             throw new System.NotImplementedException();
-        }
-
-        public List<HedgeInstrumentSettings> GetHedgeInstrumentSettingsList()
-        {
-            return InstrumentSettings.Values.ToList();
-        }
-
-        public Task AddOrUpdateSettings(HedgeInstrumentSettings settings)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task RemoveSettings(string symbol, string walletId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public HedgeInstrumentSettings GetHedgeInstrumentSettings(string symbol, string walletId)
-        {
-            return InstrumentSettings.Values.FirstOrDefault(e => e.WalletId == walletId && e.InstrumentSymbol == symbol);
         }
     }
 }

@@ -80,7 +80,6 @@ namespace Service.Liquidity.Engine.Modules
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
             RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(builder, SettingsHedgeGlobalNoSql.TableName);
-            RegisterMyNoSqlWriter<SettingsHedgeInstrumentNoSql>(builder, SettingsHedgeInstrumentNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsLiquidityProviderInstrumentNoSql>(builder, SettingsLiquidityProviderInstrumentNoSql.TableName);
 
             

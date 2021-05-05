@@ -45,9 +45,9 @@ namespace Service.Liquidity.Engine.Tests
         public async Task DoNotHedge_InstrumentSettingsModeDisable()
         {
             AddSellPosition();
-            
+
             _hedgeSettings.GlobalSettings.Mode = EngineMode.Active;
-            _hedgeSettings.InstrumentSettings["BTCUSD"].Mode = EngineMode.Disabled;
+            _settingsMock.LpSettings.First(e => e.Symbol == "BTCUSD").Mode = EngineMode.Disabled;
 
             await _service.HedgePortfolioAsync();
 
@@ -60,7 +60,7 @@ namespace Service.Liquidity.Engine.Tests
             AddBuyPosition();
 
             _hedgeSettings.GlobalSettings.Mode = EngineMode.Active;
-            _hedgeSettings.InstrumentSettings["BTCUSD"].Mode = EngineMode.Idle;
+            _settingsMock.LpSettings.First(e => e.Symbol == "BTCUSD").Mode = EngineMode.Idle;
 
             await _service.HedgePortfolioAsync();
 
@@ -106,7 +106,7 @@ namespace Service.Liquidity.Engine.Tests
                 Side = OrderSide.Buy,
                 OppositeVolume = -20000.0,
 
-                AssociateWalletId = "test-wallet",
+                AssociateWalletId = "LP-Wallet",
                 AssociateBrokerId = "broker",
                 AssociateClientId = "client",
                 AssociateSymbol = "BTCUSD"

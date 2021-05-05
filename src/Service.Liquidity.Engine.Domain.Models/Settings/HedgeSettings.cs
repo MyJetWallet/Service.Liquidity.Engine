@@ -9,6 +9,6 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
 
         [DataMember(Order = 2)] public int HedgeTimerIntervalMSec { get; set; }
 
-        [DataMember(Order = 3)] public double MinVolume { get; set; }
+        [DataMember(Order = 3)] public int SkipSourceTimeoutSec { get; set; } = 300;
     }
 }

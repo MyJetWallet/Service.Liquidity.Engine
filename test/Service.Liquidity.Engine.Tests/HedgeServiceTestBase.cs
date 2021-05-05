@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
 using NUnit.Framework;
@@ -17,6 +20,9 @@ namespace Service.Liquidity.Engine.Tests
         protected HedgeSettingsManagerMock _hedgeSettings;
         protected ExternalMarketManagerMock _externalMarketManager;
         protected LpWalletManagerMock _walletManager;
+        protected MarketMakerSettingsAccessorMock _settingsMock;
+        protected OrderBookManagerMock _orderBookManager;
+        protected ExternalBalanceCacheManagerMock _externalBalanceCacheManagerMock;
 
         [SetUp]
         public void Setup()
@@ -34,41 +40,123 @@ namespace Service.Liquidity.Engine.Tests
             _hedgeSettings = new HedgeSettingsManagerMock();
             _externalMarketManager = new ExternalMarketManagerMock();
             _walletManager = new LpWalletManagerMock();
-
+            _settingsMock = new();
+            _orderBookManager = new OrderBookManagerMock();
+            _externalBalanceCacheManagerMock = new ExternalBalanceCacheManagerMock();
 
 
             _service = new HedgeService(
                 _loggerFactory.CreateLogger<HedgeService>(),
                 _positioPortfolioManager,
                 _hedgeSettings,
-                _hedgeSettings,
                 _externalMarketManager,
-                _walletManager);
+                _walletManager,
+                _settingsMock,
+                _orderBookManager,
+                _externalBalanceCacheManagerMock
+                );
 
 
             _hedgeSettings.GlobalSettings.Mode = EngineMode.Active;
 
-            _hedgeSettings.InstrumentSettings["BTCUSD"] = new HedgeInstrumentSettings()
+
+            _settingsMock.MmSettings.Mode = EngineMode.Disabled;
+            _settingsMock.MmSettings.UseExternalBalancePercentage = 100;
+
+            _settingsMock.LpSettings.Add(new LiquidityProviderInstrumentSettings()
             {
-                WalletId = "test-wallet",
-                InstrumentSymbol = "BTCUSD",
-                ExternalMarket = "FTX",
-                ExternalSymbol = "BTC/USD",
-                MinVolume = 0.01,
-                Mode = EngineMode.Active
-            };
+                Mode = EngineMode.Active,
+                ModeHedge = EngineMode.Active,
+                LpWalletName = "LP-Wallet",
+                Symbol = "BTCUSD",
+                LpSources = new List<LpSourceSettings>(),
+                LpHedges = new List<LpHedgeSettings>()
+                {
+                    new LpHedgeSettings()
+                    {
+                        Mode = EngineMode.Active,
+                        ExternalMarket = "FTX",
+                        ExternalSymbol = "BTC/USD",
+                        MinVolume = 0.01
+                    }
+                }
+            });
 
             _externalMarketManager.Prices["BTC/USD"] = 10000;
             _externalMarketManager.Trades["FTX"] = new List<ExchangeTrade>();
-
-            _walletManager.Wallets["test-wallet"] = new LpWallet()
+            _externalMarketManager.MarketInfo["BTC/USD"] = new ExchangeMarketInfo()
             {
-                WalletId = "test-wallet",
+                Market = "BTC/USD",
+                BaseAsset = "BTC",
+                QuoteAsset = "USD",
+                MinVolume = 0.01,
+                VolumeAccuracy = 4,
+                PriceAccuracy = 2
+            };
+
+            _walletManager.Wallets["LP-Wallet"] = new LpWallet()
+            {
+                WalletId = "LP-Wallet",
                 BrokerId = "broker",
                 ClientId = "client",
                 Name = "NAME"
             };
 
+            _externalBalanceCacheManagerMock.Balances["FTX"] = new Dictionary<string, ExchangeBalance>();
+            _externalBalanceCacheManagerMock.Balances["FTX"]["BTC"] = new ExchangeBalance()
+            {
+                Symbol = "BTC",
+                Balance = 10,
+                Free = 10
+            };
+            _externalBalanceCacheManagerMock.Balances["FTX"]["USD"] = new ExchangeBalance()
+            {
+                Symbol = "USD",
+                Balance = 1000000,
+                Free = 1000000
+            };
+
+            _externalBalanceCacheManagerMock.Markets["FTX"] = new Dictionary<string, ExchangeMarketInfo>();
+            _externalBalanceCacheManagerMock.Markets["FTX"]["BTC/USD"] = new ExchangeMarketInfo()
+            {
+                Market = "BTC/USD",
+                BaseAsset = "BTC",
+                QuoteAsset = "USD",
+                MinVolume = 0,
+                PriceAccuracy = 0,
+                VolumeAccuracy = 4
+            };
+
+            _orderBookManager.Data[("BTC/USD", "FTX")] = new LeOrderBook
+            {
+                Symbol = "BTC/USD",
+                Source = "FTX",
+                Timestamp = DateTime.UtcNow,
+                Asks = new List<LeOrderBookLevel>()
+                {
+                    new LeOrderBookLevel(60100, 0.4),
+                    new LeOrderBookLevel(60110, 0.1),
+                    new LeOrderBookLevel(60120, 0.5),
+                    new LeOrderBookLevel(60130, 1),
+                    new LeOrderBookLevel(60140, 2),
+                },
+                Bids = new List<LeOrderBookLevel>()
+                {
+                    new LeOrderBookLevel(60090, 0.4),
+                    new LeOrderBookLevel(60080, 0.1),
+                    new LeOrderBookLevel(60070, 0.5),
+                    new LeOrderBookLevel(60060, 1),
+                    new LeOrderBookLevel(60000, 2)
+                }
+            };
+        }
+
+        [Test]
+        public async Task Validate()
+        {
+            _service.Should().NotBeNull();
+
+            await _service.HedgePortfolioAsync();
         }
     }
 }
