@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using ME.Contracts.Api;
 using ME.Contracts.Api.IncomingMessages;
+using Status = ME.Contracts.Api.IncomingMessages.Status;
 
-namespace Service.Liquidity.Engine.Tests
+namespace Service.Liquidity.Engine.Tests.Mock
 {
     public class TradingServiceClientMock : TradingService.TradingServiceClient
     {
@@ -13,39 +14,7 @@ namespace Service.Liquidity.Engine.Tests
 
         public Func<MultiLimitOrder, MultiLimitOrderResponse> MultiLimitOrderCallback { get; set; }
 
-        public MarketOrderResponse MarketOrder(MarketOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<MarketOrderResponse> MarketOrderAsync(MarketOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public LimitOrderResponse LimitOrder(LimitOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<LimitOrderResponse> LimitOrderAsync(LimitOrder request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public LimitOrderCancelResponse CancelLimitOrder(LimitOrderCancel request,
-            CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<LimitOrderCancelResponse> CancelLimitOrderAsync(LimitOrderCancel request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new NotImplementedException();
-        }
-
-        public MultiLimitOrderResponse MultiLimitOrder(MultiLimitOrder request,
-            CancellationToken cancellationToken = new CancellationToken())
+        public override MultiLimitOrderResponse MultiLimitOrder(MultiLimitOrder request, CallOptions options)
         {
             CallList.Add(request);
 
@@ -78,9 +47,10 @@ namespace Service.Liquidity.Engine.Tests
             return resp;
         }
 
-        public Task<MultiLimitOrderResponse> MultiLimitOrderAsync(MultiLimitOrder request, CancellationToken cancellationToken = new CancellationToken())
+        public override AsyncUnaryCall<MultiLimitOrderResponse> MultiLimitOrderAsync(MultiLimitOrder request,
+            CallOptions options)
         {
-            return Task.FromResult(MultiLimitOrder(request));
+            return new(Task.FromResult(MultiLimitOrder(request, new CallOptions())), null, null, null, null);
         }
     }
 }
