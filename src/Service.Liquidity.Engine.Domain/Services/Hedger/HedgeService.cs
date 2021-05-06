@@ -106,7 +106,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
 
 
-            var instrumentSettings = instrumentSettingsList.FirstOrDefault(e => e.Symbol == positionPortfolio.Symbol); //todo: validate brokerId
+            var instrumentSettings = instrumentSettingsList.FirstOrDefault(e => 
+                e.Symbol == positionPortfolio.Symbol &&
+                e.WalletId == positionPortfolio.WalletId); //todo: validate brokerId
 
             if (globalHedgeSettings == null || instrumentSettings == null)
             {
@@ -130,7 +132,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     return;
                 }
 
-                var wallet = _lpWalletManager.GetWalletById(instrumentSettings.LpWalletName);
+                var wallet = _lpWalletManager.GetWallet(instrumentSettings.LpWalletName);
                 if (wallet == null)
                 {
                     _logger.LogError("Cannot hedge position {positionId}, because wallet '{marketName}' not found",
@@ -141,8 +143,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                 }
 
                 activity?.AddTag("walletName", wallet.Name);
-
-                //throw new NotImplementedException();
 
                 var externalMarkets = await GetAvailableExternalMarkets(positionPortfolio, instrumentSettings);
 
@@ -157,11 +157,19 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
                 List<LpOrder> externalOrders = new();
 
-                foreach (var externalMarketItem in externalMarkets)
+                var remainingVolume = (double)Math.Abs(positionPortfolio.BaseVolume);
+
+                foreach (var externalMarketItem in externalMarkets.Where(e => remainingVolume >= e.Value.Item3.MinVolume))
                 {
                     var orders = await GenerateOrdersFromSourceAsync(
                         externalMarketItem.Value.Item1, externalMarketItem.Value.Item2, externalMarketItem.Key, marketMakerSettings.UseExternalBalancePercentage, positionPortfolio.Side);
                     externalOrders.AddRange(orders);
+                }
+
+                if (!externalOrders.Any())
+                {
+                    activity?.AddTag("hedge-message", "do not found available option to trade");
+                    return;
                 }
 
                 List<LpOrder> externalOrdersToExecute = new();
@@ -169,10 +177,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                 var sortedOrders = positionPortfolio.Side == OrderSide.Buy
                     ? externalOrders.OrderBy(e => e.Price)
                     : externalOrders.OrderByDescending(e => e.Price);
-
-
-                var remainingVolume = (double)Math.Abs(positionPortfolio.BaseVolume);
-
+                
                 foreach (var lpOrder in sortedOrders)
                 {
                     if (lpOrder.Volume >= remainingVolume)
@@ -205,18 +210,20 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                         volume = -volume;
                     volume = Math.Round(volume, info.VolumeAccuracy, MidpointRounding.ToZero);
 
-                    _logger.LogInformation("Try to execute external trade");
+                    var tradeRequest = new MarketTradeRequest()
+                    {
+                        ReferenceId = $"{positionPortfolio.Id}__{iteration}",
+                        Side = positionPortfolio.Side == OrderSide.Buy ? OrderSide.Sell : OrderSide.Buy,
+                        Volume = volume,
+                        Market = info.Market
+                    };
 
-                    ExchangeTrade trade = null;
+                    _logger.LogInformation("Try to execute external trade. PositionId {positionId}; TradeRequest: {tradeJson}", positionPortfolio.Id, JsonConvert.SerializeObject(tradeRequest));
+
+                    ExchangeTrade trade;
                     try
                     {
-                        trade = await market.MarketTrade(new MarketTradeRequest()
-                        {
-                            ReferenceId = $"{positionPortfolio.Id}__{iteration}",
-                            Side = positionPortfolio.Side == OrderSide.Buy ? OrderSide.Sell : OrderSide.Buy,
-                            Volume = volume,
-                            Market = info.Market
-                        });
+                        trade = await market.MarketTrade(tradeRequest);
 
                         if (trade == null)
                         {
@@ -226,8 +233,11 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     catch(Exception ex)
                     {
                         SkipSource(source.Key, $"Error on make trade: {ex.ToString()}");
-                        _logger.LogError(ex, "Cannot hedge position on external market: {sourceText}. Position: {PositionJson}",
-                            source.Key, JsonConvert.SerializeObject(positionPortfolio));
+                        _logger.LogError(ex, "Cannot hedge position on external market: {sourceText}. PositionId: {positionId}; ExternalMarket: {externalMarketName};  TradeRequest: {tradeJson}",
+                            source.Key, 
+                            positionPortfolio.Id,
+
+                            JsonConvert.SerializeObject(tradeRequest));
 
                         return;
                     }
@@ -263,10 +273,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
         private readonly Dictionary<string, ExchangeMarketInfo> _externalMarketInfoCache1 = new();
 
-        private async Task<Dictionary<string, (IExternalMarket, ExchangeMarketInfo)>> GetAvailableExternalMarkets(PositionPortfolio positionPortfolio,
+        private async Task<Dictionary<string, (IExternalMarket, ExchangeMarketInfo, LpHedgeSettings)>> GetAvailableExternalMarkets(PositionPortfolio positionPortfolio,
             LiquidityProviderInstrumentSettings instrumentSettings)
         {
-            var externalMarkets = new Dictionary<string, (IExternalMarket, ExchangeMarketInfo)>();
+            var externalMarkets = new Dictionary<string, (IExternalMarket, ExchangeMarketInfo, LpHedgeSettings)>();
 
             HashSet<string> skipMarkets = null;
             lock (_skippedSources) skipMarkets = _skippedSources.Keys.ToHashSet();
@@ -302,7 +312,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     continue;
                 }
 
-                externalMarkets.Add(source.ExternalMarket, (market, mInfo));
+                externalMarkets.Add(source.ExternalMarket, (market, mInfo, source));
             }
 
             return externalMarkets;

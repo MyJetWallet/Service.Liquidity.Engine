@@ -8,6 +8,7 @@ using MyNoSqlServer.Abstractions;
 using Newtonsoft.Json;
 using Service.Liquidity.Engine.Domain.Models.Settings;
 using Service.Liquidity.Engine.Domain.NoSql;
+using Service.Liquidity.Engine.Domain.Services.Wallets;
 
 namespace Service.Liquidity.Engine.Domain.Services.Settings
 {
@@ -16,7 +17,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         private readonly ILogger<MarketMakerSettingsManager> _logger;
         private readonly IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> _marketMakerDataWriter;
         private readonly IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> _lpInstrumentDataWriter;
-        
+
+        private readonly ILpWalletManager _lpWalletManager;
+
         private Dictionary<string, LiquidityProviderInstrumentSettings> _lpInstrumentSettings = new();
         private MarketMakerSettings _marketMakerSettings = new MarketMakerSettings(EngineMode.Disabled);
 
@@ -25,12 +28,13 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
         public MarketMakerSettingsManager(
             ILogger<MarketMakerSettingsManager> logger,
             IMyNoSqlServerDataWriter<SettingsMarketMakerNoSql> marketMakerDataWriter,
-            IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> lpInstrumentDataWriter
-            )
+            IMyNoSqlServerDataWriter<SettingsLiquidityProviderInstrumentNoSql> lpInstrumentDataWriter,
+            ILpWalletManager lpWalletManager)
         {
             _logger = logger;
             _marketMakerDataWriter = marketMakerDataWriter;
             _lpInstrumentDataWriter = lpInstrumentDataWriter;
+            _lpWalletManager = lpWalletManager;
         }
 
         public async Task ChangeMarketMakerModeAsync(EngineMode mode)
@@ -91,6 +95,13 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
 
             try
             {
+                settings.LpHedges ??= new();
+                settings.LpSources ??= new();
+
+                FillWallet(settings);
+
+                ValidateSettings(settings);
+
                 var entity = SettingsLiquidityProviderInstrumentNoSql.Create(settings);
 
                 var exist = await _lpInstrumentDataWriter.GetAsync(entity.PartitionKey, entity.RowKey);
@@ -113,10 +124,13 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Cannot add AddLiquidityProviderSettings: {requestJson}", JsonConvert.SerializeObject(settings));
                 ex.FailActivity();
                 throw;
             }
         }
+
+        
 
         public async Task UpdateLiquidityProviderSettings(LiquidityProviderInstrumentSettings settings)
         {
@@ -125,6 +139,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
 
             try
             {
+                FillWallet(settings);
+
+                ValidateSettings(settings);
+
                 await _lpInstrumentDataWriter.InsertOrReplaceAsync(SettingsLiquidityProviderInstrumentNoSql.Create(settings));
 
                 await ReloadSettings();
@@ -133,8 +151,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Cannot add UpdateLiquidityProviderSettings: {requestJson}", JsonConvert.SerializeObject(settings));
                 ex.FailActivity();
-
+                throw;
             }
         }
 
@@ -161,7 +180,6 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
             }
         }
 
-
         public void Start()
         {
             ReloadSettings().GetAwaiter().GetResult();
@@ -183,5 +201,53 @@ namespace Service.Liquidity.Engine.Domain.Services.Settings
                 _lpInstrumentSettings = lpInstrument.ToDictionary(e => e.Settings.Symbol, e => e.Settings);
             }
         }
+
+        private void FillWallet(LiquidityProviderInstrumentSettings settings)
+        {
+            if (!string.IsNullOrEmpty(settings.LpWalletName))
+            {
+                var  wallet = _lpWalletManager.GetWallet(settings.LpWalletName);
+                if (wallet == null)
+                {
+                    _logger.LogError($"Cannot find wallet by name: {settings.LpWalletName}");
+                    throw new Exception($"Cannot find wallet by name: {settings.LpWalletName}");
+                }
+
+                settings.WalletId = wallet.WalletId;
+                settings.BrokerId = wallet.BrokerId;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(settings.WalletId))
+            {
+                var wallet = _lpWalletManager.GetWalletById(settings.WalletId);
+                if (wallet == null)
+                {
+                    _logger.LogError($"Cannot find wallet by Id: {settings.WalletId}");
+                    throw new Exception($"Cannot find wallet by Id: {settings.WalletId}");
+                }
+
+                settings.WalletId = wallet.WalletId;
+                settings.BrokerId = wallet.BrokerId;
+                return;
+            }
+
+            _logger.LogError("Cannot find wallet, name and Id is empty");
+            throw new Exception("Cannot find wallet, name and Id is empty");
+        }
+
+        private void ValidateSettings(LiquidityProviderInstrumentSettings settings)
+        {
+            if (settings.LpHedges.GroupBy(e => new { e.ExternalMarket, e.ExternalSymbol }).Any(e => e.Count() > 1))
+            {
+                throw new Exception("Cannot add settings with duplicate in LpHedges");
+            }
+
+            if (settings.LpSources.GroupBy(e => new { e.ExternalMarket, e.ExternalSymbol }).Any(e => e.Count() > 1))
+            {
+                throw new Exception("Cannot add settings with duplicate in LpSources");
+            }
+        }
+
     }
 }

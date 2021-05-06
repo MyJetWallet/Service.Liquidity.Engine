@@ -282,6 +282,8 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 WalletVersion = -1
             };
 
+            externalOrders = FixNegativeSpread(externalOrders, instrument.Accuracy);
+
             foreach (var lpOrder in externalOrders.Where(o => o.Status == LpOrderStatus.Todo))
             {
                 lpOrder.Id = _orderIdGenerator.GenerateOrderId(orderBase, ++orderIndex);
@@ -509,5 +511,39 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
                 }
             }
         }
+
+        private List<LpOrder> FixNegativeSpread(List<LpOrder> externalOrders, int accuracy)
+        {
+            var askLevel = externalOrders.Where(e => e.Side == OrderSide.Sell).OrderBy(e => e.Price).FirstOrDefault();
+            var bidLevel = externalOrders.Where(e => e.Side == OrderSide.Buy).OrderByDescending(e => e.Price).FirstOrDefault();
+
+            if (askLevel == null || bidLevel == null || askLevel.Price > bidLevel.Price)
+                return externalOrders;
+
+            var askPrice = askLevel.Price;
+            var bidPrice = bidLevel.Price;
+
+            var midPrice = (askPrice + bidPrice) / 2;
+            midPrice = Math.Round(midPrice, accuracy);
+
+            var delta = 1 / Math.Pow(10, accuracy);
+
+            askPrice = Math.Round( midPrice + delta, accuracy);
+            bidPrice = Math.Round( midPrice - delta, accuracy);
+
+
+            foreach (var order in externalOrders.Where(e => e.Side == OrderSide.Sell && e.Price < askPrice))
+            {
+                order.Price = askPrice;
+            }
+
+            foreach (var order in externalOrders.Where(e => e.Side == OrderSide.Buy && e.Price > bidPrice))
+            {
+                order.Price = bidPrice;
+            }
+
+            return externalOrders;
+        }
+
     }
 }

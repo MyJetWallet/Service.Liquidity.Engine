@@ -20,7 +20,9 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
 
         [DataMember(Order = 6)] public EngineMode ModeHedge { get; set; }
 
-        //todo: add brokerId
+        [DataMember(Order = 7)] public string WalletId { get; set; }
+
+        [DataMember(Order = 8)] public string BrokerId { get; set; }
     }
 
     [DataContract]

@@ -67,7 +67,7 @@ namespace Service.Liquidity.Engine.Tests
             {
                 Mode = EngineMode.Active,
                 ModeHedge = EngineMode.Active,
-                LpWalletName = "LP-Wallet",
+                LpWalletName = "NAME",
                 Symbol = "BTCUSD",
                 LpSources = new List<LpSourceSettings>(),
                 LpHedges = new List<LpHedgeSettings>()
@@ -79,7 +79,9 @@ namespace Service.Liquidity.Engine.Tests
                         ExternalSymbol = "BTC/USD",
                         MinVolume = 0.01
                     }
-                }
+                },
+                WalletId = "LP-Wallet",
+                BrokerId = "broker"
             });
 
             _externalMarketManager.Prices["BTC/USD"] = 10000;
@@ -94,7 +96,7 @@ namespace Service.Liquidity.Engine.Tests
                 PriceAccuracy = 2
             };
 
-            _walletManager.Wallets["LP-Wallet"] = new LpWallet()
+            _walletManager.Wallets["NAME"] = new LpWallet()
             {
                 WalletId = "LP-Wallet",
                 BrokerId = "broker",

@@ -149,7 +149,7 @@ namespace Service.Liquidity.Engine.Tests
                 IsOpen = true,
                 OpenTime = DateTime.UtcNow,
                 Side = OrderSide.Buy,
-                WalletId = "test-wallet"
+                WalletId = "LP-Wallet"
             };
         }
 
@@ -166,7 +166,8 @@ namespace Service.Liquidity.Engine.Tests
                 IsOpen = true,
                 OpenTime = DateTime.UtcNow,
                 Side = OrderSide.Sell,
-                WalletId = "test-wallet"
+                WalletId = "LP-Wallet"
+                
             };
         }
     }
