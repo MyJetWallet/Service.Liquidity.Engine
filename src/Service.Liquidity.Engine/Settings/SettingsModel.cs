@@ -18,8 +18,8 @@ namespace Service.Liquidity.Engine.Settings
         [YamlProperty("LiquidityEngine.MyNoSqlWriterUrl")]
         public string MyNoSqlWriterUrl { get; set; }
 
-        [YamlProperty("LiquidityEngine.MatchingEngine.TradingGrpcServiceUrl")]
-        public string MatchingEngineTradingServiceGrpcUrl { get; set; }
+        [YamlProperty("LiquidityEngine.MatchingEngineApiGrpcServiceUrl")]
+        public string MatchingEngineApiGrpcServiceUrl { get; set; }
 
         [YamlProperty("LiquidityEngine.AccuracyToNormalizeDouble")]
         public int AccuracyToNormalizeDouble { get; set; }

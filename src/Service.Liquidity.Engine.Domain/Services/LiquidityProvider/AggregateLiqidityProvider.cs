@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
+using ME.Contracts.Api;
 using ME.Contracts.Api.IncomingMessages;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Domain.Assets;
 using MyJetWallet.Domain.Orders;
-using MyJetWallet.MatchingEngine.Grpc.Api;
 using MyJetWallet.Sdk.Service;
 using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
@@ -33,7 +32,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
         private readonly IOrderBookManager _orderBookManager;
         private readonly IMarketMakerSettingsAccessor _settingsAccessor;
         private readonly ILpWalletManager _walletManager;
-        private readonly ITradingServiceClient _tradingServiceClient;
+        private readonly TradingService.TradingServiceClient _tradingServiceClient;
         private readonly ISpotInstrumentDictionaryClient _instrumentDictionary;
         private readonly IAssetsDictionaryClient _assetsDictionary;
         private readonly IExternalBalanceCacheManager _externalBalanceCacheManager;
@@ -45,7 +44,7 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
             IOrderBookManager orderBookManager,
             IMarketMakerSettingsAccessor settingsAccessor,
             ILpWalletManager walletManager,
-            ITradingServiceClient tradingServiceClient,
+            TradingService.TradingServiceClient tradingServiceClient,
             ISpotInstrumentDictionaryClient instrumentDictionary,
             IAssetsDictionaryClient assetsDictionary,
             IExternalBalanceCacheManager externalBalanceCacheManager)

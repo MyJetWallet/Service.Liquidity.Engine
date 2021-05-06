@@ -1,13 +1,9 @@
 ﻿using Autofac;
-using Autofac.Core;
-using Autofac.Core.Registration;
-using MyJetWallet.MatchingEngine.Grpc;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using Service.AssetsDictionary.Client;
 using Service.Balances.Client;
-using Service.Balances.Grpc;
 using Service.Liquidity.Engine.Domain.NoSql;
 using Service.Liquidity.Engine.Domain.Services.LiquidityProvider;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
@@ -15,6 +11,7 @@ using Service.Liquidity.Engine.Domain.Services.OrderBooks;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
 using Service.Liquidity.Engine.Jobs;
+using Service.MatchingEngine.Api.Client;
 
 namespace Service.Liquidity.Engine.Modules
 {
@@ -68,13 +65,8 @@ namespace Service.Liquidity.Engine.Modules
 
             
             builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, _myNoSqlClient);
-            builder.RegisterMatchingEngineGrpcClient(tradingServiceGrpcUrl: Program.Settings.MatchingEngineTradingServiceGrpcUrl);
+            builder.RegisterMatchingEngineApiClient(Program.Settings.MatchingEngineApiGrpcServiceUrl);
             builder.RegisterAssetsDictionaryClients(_myNoSqlClient);
-
-
-
-            
-
 
             RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
             RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);

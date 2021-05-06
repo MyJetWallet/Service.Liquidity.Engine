@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ME.Contracts.Api;
 using ME.Contracts.Api.IncomingMessages;
-using MyJetWallet.MatchingEngine.Grpc.Api;
 
 namespace Service.Liquidity.Engine.Tests
 {
-    public class TradingServiceClientMock : ITradingServiceClient
+    public class TradingServiceClientMock : TradingService.TradingServiceClient
     {
         public List<MultiLimitOrder> CallList { get; set; } = new();
 
