@@ -14,9 +14,9 @@ namespace Service.Liquidity.Engine.Domain.Models.Settings
 
         [DataMember(Order = 3)] public string LpWalletName { get; set; }
 
-        [DataMember(Order = 4)] public List<LpSourceSettings> LpSources { get; set; }
+        [DataMember(Order = 4)] public List<LpSourceSettings> LpSources { get; set; } = new List<LpSourceSettings>();
 
-        [DataMember(Order = 5)] public List<LpHedgeSettings> LpHedges { get; set; }
+        [DataMember(Order = 5)] public List<LpHedgeSettings> LpHedges { get; set; } = new List<LpHedgeSettings>();
 
         [DataMember(Order = 6)] public EngineMode ModeHedge { get; set; }
 
