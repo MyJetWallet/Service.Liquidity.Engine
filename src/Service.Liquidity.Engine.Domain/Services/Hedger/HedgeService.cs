@@ -148,7 +148,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
 
                 if (!externalMarkets.Any())
                 {
-                    _logger.LogError("Cannot hedge position {positionId}, not found external markets", positionPortfolio.Id, instrumentSettings.LpWalletName);
+                    _logger.LogWarning("Cannot hedge position {positionId}, not found external markets", positionPortfolio.Id, instrumentSettings.LpWalletName);
                     activity?.AddTag("hedge-message", "external markets not found");
                     activity?.SetStatus(Status.Error);
                     return;
@@ -281,7 +281,10 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
             HashSet<string> skipMarkets = null;
             lock (_skippedSources) skipMarkets = _skippedSources.Keys.ToHashSet();
 
-            foreach (var source in instrumentSettings.LpHedges.Where(e => e.Mode == EngineMode.Active && !skipMarkets.Contains(e.ExternalMarket)))
+            foreach (var source in instrumentSettings.LpHedges.Where(e => 
+                                                    e.Mode == EngineMode.Active 
+                                                    //&& !skipMarkets.Contains(e.ExternalMarket)
+                                                    ))
             {
                 var market = _externalMarketManager.GetExternalMarketByName(source.ExternalMarket);
 
