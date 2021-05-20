@@ -210,6 +210,9 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                         volume = -volume;
                     volume = Math.Round(volume, info.VolumeAccuracy, MidpointRounding.ToZero);
 
+                    if (volume < info.MinVolume)
+                        continue;
+
                     var tradeRequest = new MarketTradeRequest()
                     {
                         ReferenceId = $"{positionPortfolio.Id}__{iteration}",
