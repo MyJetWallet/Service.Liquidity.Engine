@@ -32,7 +32,7 @@ namespace Service.Liquidity.Engine
 
             services.AddHostedService<ApplicationLifetimeManager>();
 
-            services.AddMyTelemetry(Program.Settings.ZipkinUrl);
+            services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
 
         }
 
