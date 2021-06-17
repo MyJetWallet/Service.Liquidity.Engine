@@ -206,9 +206,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     var side = positionPortfolio.Side == OrderSide.Buy ? OrderSide.Sell : OrderSide.Buy;
 
                     var volume = source.Sum(e => e.Volume);
+                    var oppositeVolume = source.Sum(e => e.Price * e.Volume);
                     if (side == OrderSide.Sell)
+                    {
                         volume = -volume;
+                        oppositeVolume = -oppositeVolume;
+                    }
+
                     volume = Math.Round(volume, info.VolumeAccuracy, MidpointRounding.ToZero);
+                    oppositeVolume = Math.Round(oppositeVolume, info.PriceAccuracy, MidpointRounding.ToZero);
 
                     if (Math.Abs(volume) < info.MinVolume)
                         continue;
@@ -218,7 +224,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                         ReferenceId = $"{positionPortfolio.Id}__{iteration}",
                         Side = positionPortfolio.Side == OrderSide.Buy ? OrderSide.Sell : OrderSide.Buy,
                         Volume = volume,
-                        Market = info.Market
+                        Market = info.Market,
+                        OppositeVolume = oppositeVolume
                     };
 
                     _logger.LogInformation("Try to execute external trade. PositionId {positionId}; TradeRequest: {tradeJson}", positionPortfolio.Id, JsonConvert.SerializeObject(tradeRequest));
