@@ -348,7 +348,9 @@ namespace Service.Liquidity.Engine.Domain.Services.LiquidityProvider
 
                         price = Math.Round(price, Mathematics.AccuracyToNormalizeDouble);
                         price = Math.Round(price, instrument.Accuracy, MidpointRounding.ToPositiveInfinity);
-
+                        
+                        if (price <= double.Epsilon)
+                            continue;
 
                         var volume = level.Volume;
 
