@@ -4,7 +4,6 @@ using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {

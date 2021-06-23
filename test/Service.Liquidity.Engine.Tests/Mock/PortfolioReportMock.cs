@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using NUnit.Framework;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Tests.Mock
 {
