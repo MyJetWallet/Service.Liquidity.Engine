@@ -7,13 +7,11 @@ using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.Service.Tools;
-using Newtonsoft.Json;
-using Service.Liquidity.Engine.Domain.Models.Settings;
+using Service.BalanceHistory.ServiceBus;
 using Service.Liquidity.Engine.Domain.Services.Hedger;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
 using Service.Liquidity.Engine.Domain.Services.Settings;
 using Service.Liquidity.Engine.Domain.Services.Wallets;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Jobs
 {

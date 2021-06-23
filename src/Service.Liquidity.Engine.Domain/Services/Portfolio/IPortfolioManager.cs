@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
+using Service.BalanceHistory.ServiceBus;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {

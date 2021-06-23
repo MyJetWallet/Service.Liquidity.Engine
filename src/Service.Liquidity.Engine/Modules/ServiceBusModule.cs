@@ -3,8 +3,8 @@ using DotNetCoreDecorators;
 using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.ServiceBus;
 using MyServiceBus.Abstractions;
+using Service.BalanceHistory.Client;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.TradeHistory.Client;
 
 namespace Service.Liquidity.Engine.Modules
 {

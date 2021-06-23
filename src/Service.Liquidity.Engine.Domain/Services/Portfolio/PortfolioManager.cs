@@ -9,8 +9,8 @@ using MyJetWallet.Sdk.Service;
 using Newtonsoft.Json;
 using OpenTelemetry.Trace;
 using Service.AssetsDictionary.Client;
+using Service.BalanceHistory.ServiceBus;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Domain.Services.Portfolio
 {

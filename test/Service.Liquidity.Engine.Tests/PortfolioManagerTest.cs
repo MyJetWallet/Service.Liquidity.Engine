@@ -7,9 +7,9 @@ using MyJetWallet.Domain.ExternalMarketApi.Models;
 using MyJetWallet.Domain.Orders;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Service.BalanceHistory.Domain.Models;
+using Service.BalanceHistory.ServiceBus;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
-using Service.TradeHistory.Domain.Models;
-using Service.TradeHistory.ServiceBus;
 
 namespace Service.Liquidity.Engine.Tests
 {
