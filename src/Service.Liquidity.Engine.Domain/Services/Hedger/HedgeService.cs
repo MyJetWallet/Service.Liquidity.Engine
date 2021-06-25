@@ -216,7 +216,7 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     volume = Math.Round(volume, info.VolumeAccuracy, MidpointRounding.ToZero);
                     oppositeVolume = Math.Round(oppositeVolume, info.PriceAccuracy, MidpointRounding.ToZero);
 
-                    if (Math.Abs(volume) < info.MinVolume)
+                    if (Math.Abs(volume) <= info.MinVolume)
                         continue;
 
                     var tradeRequest = new MarketTradeRequest()
