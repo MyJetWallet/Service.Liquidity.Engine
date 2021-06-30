@@ -20,6 +20,10 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
         [DataMember(Order = 8)] public double QuoteVolume { get; set; }
         [DataMember(Order = 9)] public DateTime DateTime { get; set; }
         [DataMember(Order = 10)] public string ReferenceId { get; set; }
+        [DataMember(Order = 11)] public string AssociateWalletId { get; set; }
+        [DataMember(Order = 12)] public string AssociateBrokerId { get; set; }
+        [DataMember(Order = 13)] public string AssociateClientId { get; set; }
+        [DataMember(Order = 14)] public string AssociateSymbol { get; set; }
 
         public PortfolioTrade(WalletTrade trade, string walletId)
         {
@@ -36,8 +40,8 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
         }
 
         public PortfolioTrade(string tradeId, string source, bool isInternal, string symbol, OrderSide side,
-            double price, double baseVolume,
-            double quoteVolume, DateTime dateTime, string referenceId)
+            double price, double baseVolume, double quoteVolume, DateTime dateTime, string referenceId,
+            string associateWalletId, string associateBrokerId, string associateClientId, string associateSymbol)
         {
             TradeId = tradeId;
             Source = source;
@@ -49,6 +53,10 @@ namespace Service.Liquidity.Engine.Domain.Models.Portfolio
             QuoteVolume = quoteVolume;
             DateTime = dateTime;
             ReferenceId = referenceId;
+            AssociateWalletId = associateWalletId;
+            AssociateBrokerId = associateBrokerId;
+            AssociateClientId = associateClientId;
+            AssociateSymbol = associateSymbol;
         }
 
         public PortfolioTrade()

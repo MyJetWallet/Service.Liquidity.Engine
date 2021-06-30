@@ -241,7 +241,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         {
             var result = new PortfolioTrade(trade.Trade.TradeUId, trade.WalletId, true, trade.Trade.InstrumentSymbol,
                 trade.Trade.Side, trade.Trade.Price,
-                trade.Trade.BaseVolume, trade.Trade.QuoteVolume, trade.Trade.DateTime, string.Empty);
+                trade.Trade.BaseVolume, trade.Trade.QuoteVolume, trade.Trade.DateTime, string.Empty,
+                trade.WalletId, trade.BrokerId, trade.ClientId, trade.Trade.InstrumentSymbol);
 
             return result;
         }
@@ -250,7 +251,8 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
         {
             var result = new PortfolioTrade(trade.Id, trade.Source, false, trade.Market,
                 trade.Side, trade.Price,
-                trade.Volume, trade.OppositeVolume, trade.Timestamp, trade.ReferenceId);
+                trade.Volume, trade.OppositeVolume, trade.Timestamp, trade.ReferenceId,
+                trade.AssociateWalletId, trade.AssociateBrokerId, trade.AssociateClientId, trade.AssociateSymbol);
 
             return result;
         }
