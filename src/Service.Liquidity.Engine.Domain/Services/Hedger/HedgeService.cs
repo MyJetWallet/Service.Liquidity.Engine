@@ -396,8 +396,11 @@ namespace Service.Liquidity.Engine.Domain.Services.Hedger
                     volume = Math.Round(volume, Mathematics.AccuracyToNormalizeDouble);
                     volume = Math.Round(volume, symbolInfo.VolumeAccuracy, MidpointRounding.ToZero);
 
-                    if (volume < (double)symbolInfo.MinVolume)
+                    if (volume < (double) symbolInfo.MinVolume)
+                    {
+                        _logger.LogDebug("Skip hedging symbol: {externalSymbol} on source {externalMarket}. Because hedge volume < Min volume. ({hedgeVolume}; {minVolume})", symbolInfo.Market, source, volume, symbolInfo.MinVolume);
                         continue;
+                    }
 
                     list.Add(new LpOrder("", symbolInfo.Market, source, price, volume, OrderSide.Sell));
 
