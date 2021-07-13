@@ -52,7 +52,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
             {
                 try
                 {
-                    var name = source.GetNameAsync().GetAwaiter().GetResult();
+                    var name = source.GetNameAsync(null).GetAwaiter().GetResult();
                     if (!string.IsNullOrEmpty(name?.Name))
                         _markets[name.Name] = source;
                 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using FluentAssertions;
 using MyJetWallet.Domain.ExternalMarketApi.Models;
@@ -69,7 +70,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("1", "BTCUSD", 6000, 1, -6000, "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 1),
+                    Trade = new WalletTrade("1", "BTCUSD", 6000, 1, -6000, 
+                        "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 1, string.Empty,0),
                 },
 
                 new WalletTradeMessage()
@@ -77,7 +79,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("2", "BTCUSD", 6000, 1, -6000, "2", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 2),
+                    Trade = new WalletTrade("2", "BTCUSD", 6000, 1, -6000, 
+                        "2", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 2,string.Empty,0),
                 }
             };
             
@@ -98,7 +101,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("3", "BTCUSD", 6000, -3, 6000, "3", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Sell, 3),
+                    Trade = new WalletTrade("3", "BTCUSD", 6000, -3, 6000, 
+                        "3", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Sell, 3, string.Empty,0),
                 }
             };
 
@@ -124,7 +128,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("4", "BTCUSD", 6000, 1, -6000, "4", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 4),
+                    Trade = new WalletTrade("4", "BTCUSD", 6000, 1, -6000, 
+                        "4", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 4, string.Empty,0),
                 }
             };
 
@@ -321,7 +326,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("1", "BTCUSD", 10000, 2, -20000, "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 3),
+                    Trade = new WalletTrade("1", "BTCUSD", 10000, 2, -20000, 
+                        "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Buy, 3, string.Empty,0),
                 }
             };
 
@@ -375,7 +381,8 @@ namespace Service.Liquidity.Engine.Tests
                     BrokerId = "broker",
                     WalletId = "TEST",
                     ClientId = "client",
-                    Trade = new WalletTrade("1", "BTCUSD", 10000, -2, 20000, "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Sell, 3),
+                    Trade = new WalletTrade("1", "BTCUSD", 10000, -2, 20000, 
+                        "1", OrderType.Market, 1, DateTime.UtcNow, OrderSide.Sell, 3, string.Empty,0),
                 }
             };
 

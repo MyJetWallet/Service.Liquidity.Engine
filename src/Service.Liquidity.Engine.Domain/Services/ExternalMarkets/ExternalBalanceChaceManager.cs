@@ -52,9 +52,9 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
 
                     var client = _manager.GetExternalMarketByName(name);
 
-                    var resp = await client.GetBalancesAsync();
+                    var resp = await client.GetBalancesAsync(null);
 
-                    var infos = await client.GetMarketInfoListAsync();
+                    var infos = await client.GetMarketInfoListAsync(null);
 
                     lock (_sync)
                     {

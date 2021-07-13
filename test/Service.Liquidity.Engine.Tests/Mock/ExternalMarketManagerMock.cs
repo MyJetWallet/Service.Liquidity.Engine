@@ -52,12 +52,12 @@ namespace Service.Liquidity.Engine.Tests.Mock
         }
 
 
-        public Task<GetNameResult> GetNameAsync()
+        public Task<GetNameResult> GetNameAsync(GetNameRequest request)
         {
             return Task.FromResult(new GetNameResult() {Name = Name});
         }
 
-        public Task<GetBalancesResponse> GetBalancesAsync()
+        public Task<GetBalancesResponse> GetBalancesAsync(GetBalancesRequest request)
         {
             throw new NotImplementedException();
         }
@@ -70,7 +70,7 @@ namespace Service.Liquidity.Engine.Tests.Mock
             return Task.FromResult(new GetMarketInfoResponse() { Info = null });
         }
 
-        public Task<GetMarketInfoListResponse> GetMarketInfoListAsync()
+        public Task<GetMarketInfoListResponse> GetMarketInfoListAsync(GetMarketInfoListRequest request)
         {
             throw new NotImplementedException();
         }
