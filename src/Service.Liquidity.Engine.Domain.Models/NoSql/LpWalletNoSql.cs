@@ -1,7 +1,7 @@
 ﻿using MyNoSqlServer.Abstractions;
 using Service.Liquidity.Engine.Domain.Models.Wallets;
 
-namespace Service.Liquidity.Engine.Domain.NoSql
+namespace Service.Liquidity.Engine.Domain.Models.NoSql
 {
     public class LpWalletNoSql: MyNoSqlDbEntity
     {

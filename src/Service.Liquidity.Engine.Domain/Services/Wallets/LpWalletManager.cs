@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Service.Balances.Domain.Models;
 using Service.Balances.Grpc;
 using Service.Balances.Grpc.Models;
+using Service.Liquidity.Engine.Domain.Models.NoSql;
 using Service.Liquidity.Engine.Domain.Models.Wallets;
 using Service.Liquidity.Engine.Domain.NoSql;
 

@@ -4,6 +4,7 @@ using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using Service.AssetsDictionary.Client;
 using Service.Balances.Client;
+using Service.Liquidity.Engine.Domain.Models.NoSql;
 using Service.Liquidity.Engine.Domain.NoSql;
 using Service.Liquidity.Engine.Domain.Services.LiquidityProvider;
 using Service.Liquidity.Engine.Domain.Services.MarketMakers;
