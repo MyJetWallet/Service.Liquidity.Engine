@@ -64,7 +64,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
                             _balances[name] = balancesData;
                         }
 
-                        foreach (var balance in resp.Balances)
+                        foreach (var balance in resp.Balances ?? new List<ExchangeBalance>())
                         {
                             balancesData[balance.Symbol] = balance;
                         }
@@ -76,7 +76,7 @@ namespace Service.Liquidity.Engine.Domain.Services.ExternalMarkets
                             _markets[name] = marketData;
                         }
 
-                        foreach (var info in infos.Infos)
+                        foreach (var info in infos.Infos ?? new List<ExchangeMarketInfo>())
                         {
                             marketData[info.Market] = info;
                         }
