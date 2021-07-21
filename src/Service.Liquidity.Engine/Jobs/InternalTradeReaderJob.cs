@@ -47,7 +47,9 @@ namespace Service.Liquidity.Engine.Jobs
 
         private async Task DoHedge()
         {
-            _hedgeTimer.ChangeInterval(TimeSpan.FromMilliseconds(_hedgeSettings.GetGlobalHedgeSettings().HedgeTimerIntervalMSec));
+            var interval = TimeSpan.FromMilliseconds(_hedgeSettings.GetGlobalHedgeSettings().HedgeTimerIntervalMSec);
+            _hedgeTimer.ChangeInterval(interval);
+            Console.WriteLine(interval);
 
             _countInterval++;
 
