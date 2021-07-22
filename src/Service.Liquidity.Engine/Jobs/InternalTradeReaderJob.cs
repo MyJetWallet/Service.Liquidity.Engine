@@ -49,7 +49,6 @@ namespace Service.Liquidity.Engine.Jobs
         {
             var interval = TimeSpan.FromMilliseconds(_hedgeSettings.GetGlobalHedgeSettings().HedgeTimerIntervalMSec);
             _hedgeTimer.ChangeInterval(interval);
-            Console.WriteLine(interval);
 
             _countInterval++;
 
