@@ -35,7 +35,7 @@ namespace Service.Liquidity.Engine.Domain.Services.OrderBooks
             {
                 try
                 {
-                    var name = source.GetNameAsync().GetAwaiter().GetResult();
+                    var name = source.GetNameAsync(null).GetAwaiter().GetResult();
                     if (!string.IsNullOrEmpty(name?.Name))
                     {
                         _orderBookSources[name.Name] = source;
@@ -75,7 +75,7 @@ namespace Service.Liquidity.Engine.Domain.Services.OrderBooks
             var result = new Dictionary<string, List<string>>();
             foreach (var source in _orderBookSources)
             {
-                var data = await source.Value.GetSymbolsAsync();
+                var data = await source.Value.GetSymbolsAsync(null);
                 if (data?.Symbols != null)
                 {
                     result[source.Key] = data.Symbols;
@@ -92,7 +92,7 @@ namespace Service.Liquidity.Engine.Domain.Services.OrderBooks
                 return new List<string>();
             }
 
-            var resp =  await bookSource.GetSymbolsAsync();
+            var resp =  await bookSource.GetSymbolsAsync(null);
 
             return resp?.Symbols ?? new List<string>();
         }
