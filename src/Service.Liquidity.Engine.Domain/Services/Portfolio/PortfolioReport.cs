@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using Newtonsoft.Json;
 using Service.Liquidity.Engine.Domain.Models.Portfolio;
 
@@ -10,15 +11,15 @@ namespace Service.Liquidity.Engine.Domain.Services.Portfolio
     public class PortfolioReport : IPortfolioReport
     {
         private readonly ILogger<PortfolioReport> _logger;
-        private readonly IPublisher<PortfolioTrade> _tradePublisher;
-        private readonly IPublisher<PositionAssociation> _associationPublisher;
-        private readonly IPublisher<PositionPortfolio> _positionPublisher;
+        private readonly IServiceBusPublisher<PortfolioTrade> _tradePublisher;
+        private readonly IServiceBusPublisher<PositionAssociation> _associationPublisher;
+        private readonly IServiceBusPublisher<PositionPortfolio> _positionPublisher;
 
         public PortfolioReport(
             ILogger<PortfolioReport> logger,
-            IPublisher<PortfolioTrade> tradePublisher,
-            IPublisher<PositionAssociation> associationPublisher,
-            IPublisher<PositionPortfolio> positionPublisher)
+            IServiceBusPublisher<PortfolioTrade> tradePublisher,
+            IServiceBusPublisher<PositionAssociation> associationPublisher,
+            IServiceBusPublisher<PositionPortfolio> positionPublisher)
         {
             _logger = logger;
             _tradePublisher = tradePublisher;

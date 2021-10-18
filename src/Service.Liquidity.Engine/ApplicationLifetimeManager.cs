@@ -1,7 +1,9 @@
 ﻿using System;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
+using MyJetWallet.Sdk.ServiceBus;
 using MyNoSqlServer.DataReader;
 using MyServiceBus.TcpClient;
 using Service.Liquidity.Engine.Domain.Services.Portfolio;
@@ -13,8 +15,8 @@ namespace Service.Liquidity.Engine
     public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
     {
         private readonly ILogger<ApplicationLifetimeManager> _logger;
-        private readonly MyNoSqlTcpClient _myNoSqlClient;
-        private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
+        private readonly MyNoSqlClientLifeTime _myNoSqlClient;
+        private readonly ServiceBusLifeTime _myServiceBusTcpClient;
         private readonly MarketMakerJob _marketMakerJob;
         private readonly HedgeSettingsManager _hedgeSettingsManager;
         private readonly MarketMakerSettingsManager _marketMakerSettingsManager;
@@ -23,8 +25,8 @@ namespace Service.Liquidity.Engine
         public ApplicationLifetimeManager(
             IHostApplicationLifetime appLifetime, 
             ILogger<ApplicationLifetimeManager> logger,
-            MyNoSqlTcpClient myNoSqlClient,
-            MyServiceBusTcpClient myServiceBusTcpClient,
+            MyNoSqlClientLifeTime myNoSqlClient,
+            ServiceBusLifeTime myServiceBusTcpClient,
             MarketMakerJob marketMakerJob,
             HedgeSettingsManager hedgeSettingsManager,
             MarketMakerSettingsManager marketMakerSettingsManager,

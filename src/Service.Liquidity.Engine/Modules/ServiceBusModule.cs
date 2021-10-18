@@ -12,24 +12,15 @@ namespace Service.Liquidity.Engine.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            var serviceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
+            var serviceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), Program.LogFactory);
                 
             builder.RegisterTradeHistoryServiceBusClient(serviceBusClient, $"LiquidityEngine-{Program.Settings.ServiceBusQuerySuffix}", TopicQueueType.PermanentWithSingleConnection, true);
 
-            builder
-                .RegisterInstance(new MyServiceBusPublisher<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, false))
-                .As<IPublisher<PortfolioTrade>>()
-                .SingleInstance();
+            builder.RegisterMyServiceBusPublisher<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, false);
 
-            builder
-                .RegisterInstance(new MyServiceBusPublisher<PositionAssociation>(serviceBusClient, PositionAssociation.TopicName, false))
-                .As<IPublisher<PositionAssociation>>()
-                .SingleInstance();
+            builder.RegisterMyServiceBusPublisher<PositionAssociation>(serviceBusClient, PositionAssociation.TopicName, false);
 
-            builder
-                .RegisterInstance(new MyServiceBusPublisher<PositionPortfolio>(serviceBusClient, PositionPortfolio.TopicName, false))
-                .As<IPublisher<PositionPortfolio>>()
-                .SingleInstance();
+            builder.RegisterMyServiceBusPublisher<PositionPortfolio>(serviceBusClient, PositionPortfolio.TopicName, false);
         }
     }
 }

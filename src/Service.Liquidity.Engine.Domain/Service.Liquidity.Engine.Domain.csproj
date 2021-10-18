@@ -7,15 +7,14 @@
   <ItemGroup>
     <PackageReference Include="MyJetWallet.Domain" Version="1.0.31" />
     <PackageReference Include="MyJetWallet.Domain.ExternalMarketApi" Version="1.1.6" />
+    <PackageReference Include="MyJetWallet.Sdk.NoSql" Version="1.4.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.10" />
     <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="1.2.2" />
     <PackageReference Include="MyJetWallet.Service.BalanceHistory.Client" Version="2.4.0" />
     <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="1.0.7" />
     <PackageReference Include="MyJetWallet.Service.MatchingEngine.Api.Client" Version="1.0.2" />
     <PackageReference Include="MyJetWallet.Service.Simulation.FTX.Client" Version="1.2.6" />
-    <PackageReference Include="MyNoSqlServer.DataWriter" Version="1.4.2" />
     <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="1.7.7" />
-    <PackageReference Include="MyServiceBus.TcpClient" Version="2.4.6" />
   </ItemGroup>
 
   <ItemGroup>

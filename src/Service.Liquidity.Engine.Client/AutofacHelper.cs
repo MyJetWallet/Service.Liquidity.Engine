@@ -26,31 +26,23 @@ namespace Service.Liquidity.Engine.Client
 
         public static ContainerBuilder RegisterPortfolioTradeSubscriber(this ContainerBuilder builder, MyServiceBusTcpClient client, string queryName, TopicQueueType queryType)
         {
-            builder
-                .RegisterInstance(new MyServiceBusSubscriber<PortfolioTrade>(client, PortfolioTrade.TopicName, queryName, queryType, true))
-                .As<ISubscriber<IReadOnlyList<PortfolioTrade>>>()
-                .SingleInstance();
-
+            builder.RegisterMyServiceBusSubscriberBatch<PortfolioTrade>(client, PortfolioTrade.TopicName, queryName,
+                queryType);
+            
             return builder;
         }
 
         public static ContainerBuilder RegisterPositionAssociationSubscriber(this ContainerBuilder builder, MyServiceBusTcpClient client, string queryName, TopicQueueType queryType)
         {
-            builder
-                .RegisterInstance(new MyServiceBusSubscriber<PositionAssociation>(client, PositionAssociation.TopicName, queryName, queryType, true))
-                .As<ISubscriber<IReadOnlyList<PositionAssociation>>>()
-                .SingleInstance();
+            builder.RegisterMyServiceBusSubscriberBatch<PositionAssociation>(client, PositionAssociation.TopicName, queryName, queryType);
 
             return builder;
         }
 
         public static ContainerBuilder RegisterPositionPortfolioSubscriber(this ContainerBuilder builder, MyServiceBusTcpClient client, string queryName, TopicQueueType queryType)
         {
-            builder
-                .RegisterInstance(new MyServiceBusSubscriber<PositionPortfolio>(client, PositionPortfolio.TopicName, queryName, queryType, true))
-                .As<ISubscriber<IReadOnlyList<PositionPortfolio>>>()
-                .SingleInstance();
-
+            builder.RegisterMyServiceBusSubscriberBatch<PositionPortfolio>(client, PositionPortfolio.TopicName, queryName, queryType);
+            
             return builder;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
@@ -18,11 +19,9 @@ namespace Service.Liquidity.Engine.Modules
 {
     public class ServiceModule: Module
     {
-        private MyNoSqlTcpClient _myNoSqlClient;
 
         protected override void Load(ContainerBuilder builder)
         {
-            RegisterMyNoSqlTcpClient(builder);
 
             builder
                 .RegisterType<OrderBookManager>()
@@ -64,38 +63,17 @@ namespace Service.Liquidity.Engine.Modules
                 .AsSelf()
                 .SingleInstance();
 
+            var myNoSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
             
-            builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, _myNoSqlClient);
+            builder.RegisterBalancesClients(Program.Settings.BalancesGrpcServiceUrl, myNoSqlClient);
             builder.RegisterMatchingEngineApiClient(Program.Settings.MatchingEngineApiGrpcServiceUrl);
-            builder.RegisterAssetsDictionaryClients(_myNoSqlClient);
+            builder.RegisterAssetsDictionaryClients(myNoSqlClient);
 
-            RegisterMyNoSqlWriter<LpWalletNoSql>(builder, LpWalletNoSql.TableName);
-            RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(builder, SettingsMarketMakerNoSql.TableName);
-            RegisterMyNoSqlWriter<PositionPortfolioNoSql>(builder, PositionPortfolioNoSql.TableName);
-            RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(builder, SettingsHedgeGlobalNoSql.TableName);
-            RegisterMyNoSqlWriter<SettingsLiquidityProviderInstrumentNoSql>(builder, SettingsLiquidityProviderInstrumentNoSql.TableName);
-
-            
-        }
-
-        private void RegisterMyNoSqlTcpClient(ContainerBuilder builder)
-        {
-            _myNoSqlClient = new MyNoSqlTcpClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort),
-                ApplicationEnvironment.HostName ?? $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
-
-            builder
-                .RegisterInstance(_myNoSqlClient)
-                .AsSelf()
-                .SingleInstance();
-        }
-
-        private void RegisterMyNoSqlWriter<TEntity>(ContainerBuilder builder, string table)
-            where TEntity : IMyNoSqlDbEntity, new()
-        {
-            builder.Register(ctx => new MyNoSqlServer.DataWriter.MyNoSqlServerDataWriter<TEntity>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), table, true))
-                .As<IMyNoSqlServerDataWriter<TEntity>>()
-                .SingleInstance();
-
+            builder.RegisterMyNoSqlWriter<LpWalletNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), LpWalletNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<SettingsMarketMakerNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), SettingsMarketMakerNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<PositionPortfolioNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), PositionPortfolioNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<SettingsHedgeGlobalNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), SettingsHedgeGlobalNoSql.TableName);
+            builder.RegisterMyNoSqlWriter<SettingsLiquidityProviderInstrumentNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), SettingsLiquidityProviderInstrumentNoSql.TableName);
         }
     }
 }
