@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MyJetWallet.Domain" Version="1.0.31" />
+    <PackageReference Include="MyJetWallet.Domain" Version="1.0.32" />
     <PackageReference Include="MyJetWallet.Domain.ExternalMarketApi" Version="1.1.6" />
     <PackageReference Include="MyJetWallet.Sdk.NoSql" Version="1.4.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="1.6.10" />
@@ -14,7 +14,7 @@
     <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="2.0.0" />
     <PackageReference Include="MyJetWallet.Service.MatchingEngine.Api.Client" Version="1.0.2" />
     <PackageReference Include="MyJetWallet.Service.Simulation.FTX.Client" Version="1.2.6" />
-    <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="1.7.7" />
+    <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="1.7.8" />
   </ItemGroup>
 
   <ItemGroup>
