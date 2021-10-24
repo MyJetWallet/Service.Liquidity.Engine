@@ -14,7 +14,7 @@
     <PackageReference Include="MyJetWallet.Service.Balances.Client" Version="2.0.0" />
     <PackageReference Include="MyJetWallet.Service.MatchingEngine.Api.Client" Version="1.0.2" />
     <PackageReference Include="MyJetWallet.Service.Simulation.FTX.Client" Version="1.2.6" />
-    <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="1.7.9" />
+    <PackageReference Include="MyJetWallet.Service.AssetsDictionary.Client" Version="1.8.0" />
   </ItemGroup>
 
   <ItemGroup>
